@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>المزادات الحية - منصة مزادات</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        .auction-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .auction-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+        .countdown-timer {
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+        }
+        .filter-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        .category-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        .stats-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            text-align: center;
+        }
+        .bid-history {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .view-toggle {
+            display: flex;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .view-toggle button {
+            padding: 8px 16px;
+            background: white;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .view-toggle button.active {
+            background: #3b82f6;
+            color: white;
+        }
+        .grid-view .auction-card {
+            margin-bottom: 30px;
+        }
+        .list-view .auction-item {
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            display: flex;
+            transition: all 0.3s ease;
+        }
+        .list-view .auction-item:hover {
+            transform: translateX(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="gradient-bg">
+    <!-- شريط التنقل -->
+     <%- include('partials/navbar') %>
+    <!-- محتوى صفحة المزادات -->
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        <!-- قسم البحث والتصفية -->
+        <section class="mb-8">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-6">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800">المزادات الحية</h1>
+                    <p class="text-gray-600 mt-2">اكتشف أفضل الصفقات في آلاف المزادات النشطة</p>
+                </div>
+                <div class="mt-4 md:mt-0 flex items-center space-x-4">
+                    <div class="view-toggle">
+                        <button class="active" id="gridViewBtn"><i class="fas fa-th-large"></i></button>
+                        <button id="listViewBtn"><i class="fas fa-list"></i></button>
+                    </div>
+                    <div class="text-sm text-gray-600">
+                        <span id="auctionsCount">24</span> مزاد نشط
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-section p-6 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">بحث</label>
+                        <div class="relative">
+                            <input type="text" placeholder="ابحث عن مزاد..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">الفئة</label>
+                        <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">جميع الفئات</option>
+                            <option value="cars">سيارات</option>
+                            <option value="realestate">عقارات</option>
+                            <option value="electronics">إلكترونيات</option>
+                            <option value="jewelry">مجوهرات</option>
+                            <option value="art">فنون</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">السعر</label>
+                        <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">أي سعر</option>
+                            <option value="0-1000">أقل من 1,000 ر.س</option>
+                            <option value="1000-5000">1,000 - 5,000 ر.س</option>
+                            <option value="5000-10000">5,000 - 10,000 ر.س</option>
+                            <option value="10000-50000">10,000 - 50,000 ر.س</option>
+                            <option value="50000+">أكثر من 50,000 ر.س</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">الترتيب</label>
+                        <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="ending">ينتهي قريباً</option>
+                            <option value="newest">الأحدث</option>
+                            <option value="price-low">السعر: من الأقل للأعلى</option>
+                            <option value="price-high">السعر: من الأعلى للأقل</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- إحصائيات سريعة -->
+        <section class="mb-8">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="stats-card">
+                    <i class="fas fa-gavel text-3xl text-blue-500 mb-2"></i>
+                    <h3 class="text-xl font-bold">1,245</h3>
+                    <p class="text-gray-600">مزاد نشط</p>
+                </div>
+                <div class="stats-card">
+                    <i class="fas fa-users text-3xl text-green-500 mb-2"></i>
+                    <h3 class="text-xl font-bold">24,589</h3>
+                    <p class="text-gray-600">مستخدم نشط</p>
+                </div>
+                <div class="stats-card">
+                    <i class="fas fa-trophy text-3xl text-yellow-500 mb-2"></i>
+                    <h3 class="text-xl font-bold">8,742</h3>
+                    <p class="text-gray-600">مزاد منتهي</p>
+                </div>
+                <div class="stats-card">
+                    <i class="fas fa-chart-line text-3xl text-purple-500 mb-2"></i>
+                    <h3 class="text-xl font-bold">12.5M</h3>
+                    <p class="text-gray-600">قيمة المبيعات</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- عرض المزادات (وضع الشبكة) -->
+        <section id="auctionsGrid" class="grid-view">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- مزاد 1 -->
+                <div class="auction-card bg-white rounded-xl shadow-md overflow-hidden">
+                    <div class="relative">
+                        <img src="https://images.unsplash.com/photo-1549399542-7e3f8b79c341?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" alt="سيارة تويوتا كامري" class="w-full h-48 object-cover">
+                        <div class="absolute top-4 right-4">
+                            <span class="category-badge bg-blue-100 text-blue-800">سيارات</span>
+                        </div>
+                        <div class="absolute top-4 left-4 countdown-timer">
+                            <i class="far fa-clock mr-1"></i>
+                            <span>02:15:33</span>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">سيارة تويوتا كامري 2022</h3>
+                        <p class="text-gray-600 mb-4">سيارة سيدان فاخرة بحالة ممتازة، مسافة 15,000 كم فقط</p>
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <p class="text-sm text-gray-500">السعر الحالي</p>
+                                <p class="text-lg font-bold text-blue-600">85,000 ر.س</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm text-gray-500">عدد المزايدات</p>
+                                <p class="text-lg font-bold text-gray-800">24</p>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center text-sm text-gray-500">
+                                <i class="fas fa-map-marker-alt mr-1"></i>
+                                <span>الرياض</span>
+                            </div>
+                            <a href="auction-details.html" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition duration-300">
+                                المزايدة الآن
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- مزاد 2 -->
+                <div class="auction-card bg-white rounded-xl shadow-md overflow-hidden">
+                    <div class="relative">
+                        <img src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" alt="شقة فاخرة" class="w-full h-48 object-cover">
+                        <div class="absolute top-4 right-4">
+                            <span class="category-badge bg-green-100 text-green-800">عقارات</span>
+                        </div>
+                        <div class="absolute top-4 left-4 countdown-timer">
+                            <i class="far fa-clock mr-1"></i>
+                            <span>05:22:10</span>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">شقة فاخرة في حي الصحافة</h3>
+                        <p class="text-gray-600 mb-4">شقة 4 غرف نوم، مساحة 220م²، تشطيب فاخر</p>
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <p class="text-sm text-gray-500">السعر الحالي</p>
+                                <p class="text-lg font-bold text-blue-600">1,250,000 ر.س</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm text-gray-500">عدد المزايدات</p>
+                                <p class="text-lg font-bold text-gray-800">8</p>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center text-sm text-gray-500">
+                                <i class="fas fa-map-marker-alt mr-1"></i>
+                                <span>جدة</span>
+                            </div>
+                            <a href="auction-details.html" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition duration-300">
+                                المزايدة الآن
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- مزاد 3 -->
+                <div class="auction-card bg-white rounded-xl shadow-md overflow-hidden">
+                    <div class="relative">
+                        <img src="https://images.unsplash.com/photo-1496181133206-80ce9b88a853?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" alt="لابتوب ديل" class="w-full h-48 object-cover">
+                        <div class="absolute top-4 right-4">
+                            <span class="category-badge bg-purple-100 text-purple-800">إلكترونيات</span>
+                        </div>
+                        <div class="absolute top-4 left-4 countdown-timer">
+                            <i class="far fa-clock mr-1"></i>
+                            <span>01:45:22</span>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">لابتوب ديل إكس بي إس 13</h3>
+                        <p class="text-gray-600 mb-4">معالج i7، ذاكرة 16GB، مساحة 512GB SSD، شاشة لمس</p>
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <p class="text-sm text-gray-500">السعر الحالي</p>
+                                <p class="text-lg font-bold text-blue-600">4,200 ر.س</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm text-gray-500">عدد المزايدات</p>
+                                <p class="text-lg font-bold text-gray-800">15</p>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center text-sm text-gray-500">
+                                <i class="fas fa-map-marker-alt mr-1"></i>
+                                <span>الدمام</span>
+                            </div>
+                            <a href="auction-details.html" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition duration-300">
+                                المزايدة الآن
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- مزاد 4 -->
+                <div class="auction-card bg-white rounded-xl shadow-md overflow-hidden">
+                    <div class="relative">
+                        <img src="https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" alt="ساعة رولكس" class="w-full h-48 object-cover">
+                        <div class="absolute top-4 right-4">
+                            <span class="category-badge bg-yellow-100 text-yellow-800">مجوهرات</span>
+                        </div>
+                        <div class="absolute top-4 left-4 countdown-timer">
+                            <i class="far fa-clock mr-1"></i>
+                            <span>12:30:45</span>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">ساعة رولكس ديتجاست</h3>
+                        <p class="text-gray-600 mb-4">ساعة فاخرة من الذهب الأبيض، حالة ممتازة</p>
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <p class="text-sm text-gray-500">السعر الحالي</p>
+                                <p class="text-lg font-bold text-blue-600">42,500 ر.س</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm text-gray-500">عدد المزايدات</p>
+                                <p class="text-lg font-bold text-gray-800">31</p>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center text-sm text-gray-500">
+                                <i class="fas fa-map-marker-alt mr-1"></i>
+                                <span>الرياض</span>
+                            </div>
+                            <a href="auction-details.html" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition duration-300">
+                                المزايدة الآن
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- مزاد 5 -->
+                <div class="auction-card bg-white rounded-xl shadow-md overflow-hidden">
+                    <div class="relative">
+                        <img src="https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" alt="لوحة فنية" class="w-full h-48 object-cover">
+                        <div class="absolute top-4 right-4">
+                            <span class="category-badge bg-red-100 text-red-800">فنون</span>
+                        </div>
+                        <div class="absolute top-4 left-4 countdown-timer">
+                            <i class="far fa-clock mr-1"></i>
+                            <span>03:15:20</span>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">لوحة فنية لفنان سعودي</h3>
+                        <p class="text-gray-600 mb-4">لوحة زيتية أصلية بأبعاد 100x70 سم، من مجموعة خاصة</p>
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <p class="text-sm text-gray-500">السعر الحالي</p>
+                                <p class="text-lg font-bold text-blue-600">18,750 ر.س</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm text-gray-500">عدد المزايدات</p>
+                                <p class="text-lg font-bold text-gray-800">12</p>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center text-sm text-gray-500">
+                                <i class="fas fa-map-marker-alt mr-1"></i>
+                                <span>الشرقية</span>
+                            </div>
+                            <a href="auction-details.html" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition duration-300">
+                                المزايدة الآن
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- مزاد 6 -->
+                <div class="auction-card bg-white rounded-xl shadow-md overflow-hidden">
+                    <div class="relative">
+                        <img src="https://images.unsplash.com/photo-1553440569-bcc63803a83d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" alt="دراجة نارية" class="w-full h-48 object-cover">
+                        <div class="absolute top-4 right-4">
+                            <span class="category-badge bg-indigo-100 text-indigo-800">مركبات</span>
+                        </div>
+                        <div class="absolute top-4 left-4 countdown-timer">
+                            <i class="far fa-clock mr-1"></i>
+                            <span>06:45:10</span>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">دراجة نارية هارلي ديفيدسون</h3>
+                        <p class="text-gray-600 mb-4">طراز 2021، لون أسود، مسافة 5,000 كم فقط</p>
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <p class="text-sm text-gray-500">السعر الحالي</p>
+                                <p class="text-lg font-bold text-blue-600">32,000 ر.س</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm text-gray-500">عدد المزايدات</p>
+                                <p class="text-lg font-bold text-gray-800">19</p>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center text-sm text-gray-500">
+                                <i class="fas fa-map-marker-alt mr-1"></i>
+                                <span>مكة المكرمة</span>
+                            </div>
+                            <a href="auction-details.html" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition duration-300">
+                                المزايدة الآن
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- عرض المزادات (وضع القائمة) - مخفي افتراضيًا -->
+        <section id="auctionsList" class="list-view hidden">
+            <!-- عنصر مزاد في وضع القائمة -->
+            <div class="auction-item">
+                <div class="w-1/4 mr-4">
+                    <img src="https://images.unsplash.com/photo-1549399542-7e3f8b79c341?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" alt="سيارة تويوتا كامري" class="w-full h-32 object-cover rounded-lg">
+                </div>
+                <div class="flex-1">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-800">سيارة تويوتا كامري 2022</h3>
+                            <p class="text-gray-600 mt-1">سيارة سيدان فاخرة بحالة ممتازة، مسافة 15,000 كم فقط</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="category-badge bg-blue-100 text-blue-800">سيارات</span>
+                            <div class="countdown-timer mt-2">
+                                <i class="far fa-clock mr-1"></i>
+                                <span>02:15:33</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center mt-4">
+                        <div>
+                            <p class="text-sm text-gray-500">السعر الحالي</p>
+                            <p class="text-lg font-bold text-blue-600">85,000 ر.س</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">عدد المزايدات</p>
+                            <p class="text-lg font-bold text-gray-800">24</p>
+                        </div>
+                        <div class="flex items-center text-sm text-gray-500">
+                            <i class="fas fa-map-marker-alt mr-1"></i>
+                            <span>الرياض</span>
+                        </div>
+                        <a href="auction-details.html" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition duration-300">
+                            المزايدة الآن
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- يمكن إضافة المزيد من عناصر القائمة هنا -->
+        </section>
+
+        <!-- ترقيم الصفحات -->
+        <section class="mt-12 flex justify-center">
+            <nav class="flex items-center space-x-2">
+                <a href="#" class="px-3 py-2 rounded-lg bg-blue-600 text-white font-medium">1</a>
+                <a href="#" class="px-3 py-2 rounded-lg bg-white text-gray-700 font-medium hover:bg-gray-100">2</a>
+                <a href="#" class="px-3 py-2 rounded-lg bg-white text-gray-700 font-medium hover:bg-gray-100">3</a>
+                <a href="#" class="px-3 py-2 rounded-lg bg-white text-gray-700 font-medium hover:bg-gray-100">...</a>
+                <a href="#" class="px-3 py-2 rounded-lg bg-white text-gray-700 font-medium hover:bg-gray-100">10</a>
+                <a href="#" class="px-3 py-2 rounded-lg bg-white text-gray-700 font-medium hover:bg-gray-100">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            </nav>
+        </section>
+    </main>
+
+    <!-- تذييل الصفحة -->
+     <%- include('partials/footer') %>
+
+    <script>
+        // تبديل بين وضع الشبكة ووضع القائمة
+        document.getElementById('gridViewBtn').addEventListener('click', function() {
+            document.getElementById('auctionsGrid').classList.remove('hidden');
+            document.getElementById('auctionsList').classList.add('hidden');
+            document.getElementById('gridViewBtn').classList.add('active');
+            document.getElementById('listViewBtn').classList.remove('active');
+        });
+
+        document.getElementById('listViewBtn').addEventListener('click', function() {
+            document.getElementById('auctionsGrid').classList.add('hidden');
+            document.getElementById('auctionsList').classList.remove('hidden');
+            document.getElementById('gridViewBtn').classList.remove('active');
+            document.getElementById('listViewBtn').classList.add('active');
+        });
+
+        // عدّاد تنازلي تجريبي (لأغراض العرض فقط)
+        function updateCountdowns() {
+            const countdowns = document.querySelectorAll('.countdown-timer span');
+            countdowns.forEach(countdown => {
+                let time = countdown.textContent.split(':');
+                let hours = parseInt(time[0]);
+                let minutes = parseInt(time[1]);
+                let seconds = parseInt(time[2]);
+                
+                seconds--;
+                if (seconds < 0) {
+                    seconds = 59;
+                    minutes--;
+                    if (minutes < 0) {
+                        minutes = 59;
+                        hours--;
+                        if (hours < 0) {
+                            hours = 0;
+                            minutes = 0;
+                            seconds = 0;
+                        }
+                    }
+                }
+                
+                countdown.textContent = 
+                    (hours < 10 ? '0' + hours : hours) + ':' + 
+                    (minutes < 10 ? '0' + minutes : minutes) + ':' + 
+                    (seconds < 10 ? '0' + seconds : seconds);
+            });
+        }
+        
+        setInterval(updateCountdowns, 1000);
+    </script>
+</body>
+</html>

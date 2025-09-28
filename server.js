@@ -9,6 +9,11 @@ import { userRouter } from './routes/user.route.js';
 import {categoryRouter} from './routes/category.route.js'
 import { auctionRouter } from './routes/auction.route.js';
 import { initAuctionScheduler } from './utils/closeAuctions.js';
+import { homeRouter } from './routes/home.route.js';
+import path from "path";
+import { fileURLToPath } from "url";
+
+
 
 const app = express();
 const server = http.createServer(app);
@@ -29,16 +34,28 @@ app.use((req, res, next) => {
   next();
 });
 
+
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+
+// إعداد EJS كمحرك عرض
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views')); // مجلد views
+
 
 
 // Routes
-app.use('/api/v1', userRouter);
-app.use('/api/v1',categoryRouter);
-app.use('/api/v1',auctionRouter);
+app.use('/', userRouter);
+app.use('/',categoryRouter);
+app.use('/',auctionRouter);
+app.use('/', homeRouter);
+
+
 
 io.on("connection", (socket) => {
   console.log("✅ New client connected:", socket.id);
@@ -49,9 +66,9 @@ io.on("connection", (socket) => {
     console.log(`📌 User joined auction room: auction_${auctionId}`);
   });
 
-  // دخول غرفة المستخدم (لإشعارات شخصية)
+  // دخول غرفة المستخدمuser_ (لإشعارات شخصية)
   socket.on("joinUserRoom", (userId) => {
-    socket.join(`user_${userId}`);
+    socket.join(`${userId}`);
     console.log(`📩 User joined personal room: user_${userId}`);
   });
 

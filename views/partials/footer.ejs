@@ -1,0 +1,65 @@
+<footer class="bg-gray-800 text-white pt-12 pb-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+                <div class="flex items-center mb-4">
+                    <i class="fas fa-gavel text-2xl text-blue-400 mr-2"></i>
+                    <span class="font-semibold text-xl">منصة مزادات</span>
+                </div>
+                <p class="text-gray-400 mb-4">منصة المزادات الرائدة في العالم العربي، نقدم لكم أفضل التجارب للمشاركة في المزادات وشراء وبيع المنتجات بأسعار تنافسية.</p>
+                
+            </div>
+            
+            <div>
+                <h3 class="text-lg font-semibold mb-4">روابط سريعة</h3>
+                <ul class="space-y-2">
+                    <li><a href="#" class="text-gray-400 hover:text-white transition duration-300">الرئيسية</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition duration-300">المزادات الحية</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition duration-300">الفئات</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition duration-300">كيفية المشاركة</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition duration-300">اتصل بنا</a></li>
+                </ul>
+            </div>
+            
+            <div>
+                <h3 class="text-lg font-semibold mb-4">الفئات الشائعة</h3>
+                <ul class="space-y-2">
+                    <li><a href="#" class="text-gray-400 hover:text-white transition duration-300">سيارات</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition duration-300">عقارات</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition duration-300">إلكترونيات</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition duration-300">مجوهرات</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition duration-300">فنون</a></li>
+                </ul>
+            </div>
+            
+            <div>
+                <h3 class="text-lg font-semibold mb-4">اشترك في النشرة البريدية</h3>
+                <p class="text-gray-400 mb-4">احصل على آخر المستجدات حول المزادات القادمة والعروض الحصرية</p>
+                <form class="flex">
+                    <input type="email" placeholder="بريدك الإلكتروني" class="bg-gray-700 text-white px-4 py-2 rounded-l w-full focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-r transition duration-300">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <div class="border-t border-gray-700 mt-8 pt-6 text-center text-gray-400">
+            <p>© 2023 مزادات. جميع الحقوق محفوظة.</p>
+        </div>
+    </div>
+</footer>
+
+<script>
+// JavaScript للقائمة المنسدلة في الجوّال
+document.addEventListener('DOMContentLoaded', function() {
+        const btn = document.querySelector("button.mobile-menu-button");
+        const menu = document.querySelector(".mobile-menu");
+
+        if (btn && menu) {
+            btn.addEventListener("click", () => {
+                menu.classList.toggle("hidden");
+            });
+        }
+    });
+</script>
