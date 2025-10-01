@@ -6,47 +6,54 @@ export async function createCategory(req, res) {
     const { name, description } = req.body;
 
     if (!name) {
-      return res.status(400).json({
+      return res.status(400).render("error", {
         success: false,
-        message: "اسم الفئة مطلوب"
+        message: "اسم الفئة مطلوب",
+        missingFields: ["name"] // حتى تعرضها بالصفحة
       });
     }
 
     const category = await Category.create({ name, description });
 
-    return res.status(201).json({
+    return res.status(201).render("success", {
       success: true,
       message: "تم إنشاء الفئة بنجاح",
-      category
+      data: category
     });
 
   } catch (error) {
     console.error(error);
-    return res.status(500).json({
+    return res.status(500).render("error", {
       success: false,
       message: "حدث خطأ في السيرفر",
+      missingFields: [],
       error: error.message
     });
   }
 }
+
 
 // عرض جميع الفئات
 export async function getAllCategories(req, res) {
   try {
     const categories = await Category.findAll();
-    return res.status(200).json({
+
+    return res.status(200).render("categories", {
       success: true,
       categories
     });
+
   } catch (error) {
     console.error(error);
-    return res.status(500).json({
+    return res.status(500).render("error", {
       success: false,
       message: "حدث خطأ في السيرفر",
+      missingFields: [],
       error: error.message
     });
   }
 }
+
 
 
 
@@ -58,9 +65,10 @@ export async function updateCategory(req, res) {
 
     const category = await Category.findByPk(id);
     if (!category) {
-      return res.status(404).json({
+      return res.status(404).render("error", {
         success: false,
-        message: "الفئة غير موجودة"
+        message: "الفئة غير موجودة",
+        missingFields: []
       });
     }
 
@@ -68,20 +76,23 @@ export async function updateCategory(req, res) {
     category.description = description || category.description;
     await category.save();
 
-    return res.status(200).json({
+    return res.status(200).render("success", {
       success: true,
       message: "تم تحديث الفئة بنجاح",
-      category
+      data: category
     });
+
   } catch (error) {
     console.error(error);
-    return res.status(500).json({
+    return res.status(500).render("error", {
       success: false,
       message: "حدث خطأ في السيرفر",
+      missingFields: [],
       error: error.message
     });
   }
 }
+
 
 // حذف فئة
 export async function deleteCategory(req, res) {
@@ -90,24 +101,29 @@ export async function deleteCategory(req, res) {
     const category = await Category.findByPk(id);
 
     if (!category) {
-      return res.status(404).json({
+      return res.status(404).render("error", {
         success: false,
-        message: "الفئة غير موجودة"
+        message: "الفئة غير موجودة",
+        missingFields: []
       });
     }
 
     await category.destroy();
 
-    return res.status(200).json({
+    return res.status(200).render("success", {
       success: true,
-      message: "تم حذف الفئة بنجاح"
+      message: "تم حذف الفئة بنجاح",
+      data: category // ممكن ترسل بيانات الفئة المحذوفة إذا تحب
     });
+
   } catch (error) {
     console.error(error);
-    return res.status(500).json({
+    return res.status(500).render("error", {
       success: false,
       message: "حدث خطأ في السيرفر",
+      missingFields: [],
       error: error.message
     });
   }
 }
+

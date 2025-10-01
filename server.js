@@ -12,7 +12,7 @@ import { initAuctionScheduler } from './utils/closeAuctions.js';
 import { homeRouter } from './routes/home.route.js';
 import path from "path";
 import { fileURLToPath } from "url";
-
+import  profileRouter  from './routes/profile.route.js';
 
 
 const app = express();
@@ -54,7 +54,7 @@ app.use('/', userRouter);
 app.use('/',categoryRouter);
 app.use('/',auctionRouter);
 app.use('/', homeRouter);
-
+app.use('/api/profile', profileRouter);
 
 
 io.on("connection", (socket) => {
@@ -66,7 +66,7 @@ io.on("connection", (socket) => {
     console.log(`📌 User joined auction room: auction_${auctionId}`);
   });
 
-  // دخول غرفة المستخدمuser_ (لإشعارات شخصية)
+  // دخول غرفة المستخدم user_ (لإشعارات شخصية)
   socket.on("joinUserRoom", (userId) => {
     socket.join(`${userId}`);
     console.log(`📩 User joined personal room: user_${userId}`);

@@ -90,6 +90,25 @@
             transform: translateX(-5px);
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
         }
+        .fab-tooltip {
+            position: absolute;
+            right: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            margin-right: 10px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        .fab-menu-item:hover .fab-tooltip {
+            opacity: 1;
+        }
     </style>
 </head>
 <body class="gradient-bg">
@@ -474,6 +493,26 @@
     <!-- تذييل الصفحة -->
      <%- include('partials/footer') %>
 
+   <!-- زر إنشاء مزاد جديد العائم -->
+<div class="fixed bottom-8 right-8 z-50">
+    <!-- زر الفعل الرئيسي -->
+    <button id="createAuctionFab" class="w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 transform hover:scale-110">
+        <i class="fas fa-plus text-xl"></i>
+    </button>
+    
+    <!-- القائمة المنبثقة -->
+    <div id="fabMenu" class="absolute bottom-16 right-0 mb-2 hidden flex-col space-y-3">
+        <a href="/create-auction" class="fab-menu-item bg-white text-gray-800 rounded-full shadow-md p-3 flex items-center justify-center w-12 h-12 hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 relative">
+            <i class="fas fa-gavel"></i>
+            <span class="fab-tooltip">إنشاء مزاد جديد</span>
+        </a>
+        <a href="/my-auctions" class="fab-menu-item bg-white text-gray-800 rounded-full shadow-md p-3 flex items-center justify-center w-12 h-12 hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 relative">
+            <i class="fas fa-list"></i>
+            <span class="fab-tooltip">مزاداتي</span>
+        </a>
+    </div>
+</div>
+
     <script>
         // تبديل بين وضع الشبكة ووضع القائمة
         document.getElementById('gridViewBtn').addEventListener('click', function() {
@@ -522,6 +561,26 @@
         }
         
         setInterval(updateCountdowns, 1000);
+
+        // التحكم في زر إنشاء المزاد العائم
+        document.getElementById('createAuctionFab').addEventListener('click', function() {
+            const menu = document.getElementById('fabMenu');
+            menu.classList.toggle('hidden');
+            
+            // تدوير الأيقونة عند فتح/إغلاق القائمة
+            this.querySelector('i').classList.toggle('rotate-45');
+        });
+
+        // إغلاق القائمة عند النقر خارجها
+        document.addEventListener('click', function(event) {
+            const fab = document.getElementById('createAuctionFab');
+            const menu = document.getElementById('fabMenu');
+            
+            if (!fab.contains(event.target) && !menu.contains(event.target)) {
+                menu.classList.add('hidden');
+                fab.querySelector('i').classList.remove('rotate-45');
+            }
+        });
     </script>
 </body>
 </html>

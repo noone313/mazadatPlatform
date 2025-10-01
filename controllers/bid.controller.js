@@ -4,12 +4,22 @@ import { Notification } from "../models/notification.model.js";
 import { User, sequelize } from "../models/models.js";
 
 export const createBid = async (req, res) => {
-  const t = await sequelize.transaction(); // بدء ترانساكشن
+  const t = await sequelize.transaction(); // بدء الترانزاكشن
   try {
     const { auction_id, amount } = req.body;
     const bidder_id = req.user.id;
 
-    // جلب المزاد مع قفل لتجنب التعارض
+    // التحقق من أن المبلغ صالح
+    const bidAmount = parseFloat(amount);
+    if (isNaN(bidAmount) || bidAmount <= 0) {
+      await t.rollback();
+      return res.status(400).json({ 
+        success: false,
+        message: "المبلغ غير صالح" 
+      });
+    }
+
+    // جلب المزاد مع قفل لتجنب التعارض (FOR UPDATE)
     const auction = await Auction.findByPk(auction_id, {
       include: [{
         model: Bid,
@@ -17,50 +27,60 @@ export const createBid = async (req, res) => {
         separate: true,
         order: [["amount", "DESC"]],
       }],
-      lock: true,
+      lock: t.LOCK.UPDATE,
       transaction: t
     });
 
     if (!auction) {
       await t.rollback();
-      return res.status(404).json({ message: "المزاد غير موجود" });
+      return res.status(404).json({ 
+        success: false,
+        message: "المزاد غير موجود"
+      });
     }
 
     if (auction.status !== "active") {
       await t.rollback();
-      return res.status(400).json({ message: "المزاد غير نشط" });
+      return res.status(400).json({ 
+        success: false,
+        message: "المزاد غير نشط" 
+      });
     }
 
+    // أعلى مزايدة حالياً
     const highestBid = auction.Bids.length > 0 
       ? parseFloat(auction.Bids[0].amount) 
       : parseFloat(auction.start_price);
 
-    if (parseFloat(amount) <= highestBid) {
+    if (bidAmount <= highestBid) {
       await t.rollback();
-      return res.status(400).json({ message: `المزايدة يجب أن تكون أعلى من المبلغ الحالي ${highestBid}` });
+      return res.status(400).json({ 
+        success: false,
+        message: `المزايدة يجب أن تكون أعلى من المبلغ الحالي ${highestBid}` 
+      });
     }
 
     // إنشاء المزايدة الجديدة
-    const newBid = await Bid.create({ auction_id, bidder_id, amount }, { transaction: t });
+    const newBid = await Bid.create({ auction_id, bidder_id, amount: bidAmount }, { transaction: t });
 
     // تحديث السعر الحالي للمزاد
-    auction.current_price = amount;
+    auction.current_price = bidAmount;
     await auction.save({ transaction: t });
 
-    // إشعار المزايد السابق إذا وجد
+    await t.commit(); // إنهاء الترانزاكشن بنجاح
+
+    // إشعار المزايد السابق بعد commit (لتقليل مدة القفل)
     if (auction.Bids.length > 0) {
       const previousHighestBidderId = auction.Bids[0].bidder_id;
       if (previousHighestBidderId !== bidder_id) {
         const notification = await Notification.create({
           user_id: previousHighestBidderId,
-          message: `تم تخطي مزايدتك على المزاد ${auction_id}. أعلى مزايدة حالياً ${amount}.`
-        }, { transaction: t });
+          message: `تم تخطي مزايدتك على المزاد ${auction_id}. أعلى مزايدة حالياً ${bidAmount}.`
+        });
 
         global.io?.to(`user_${previousHighestBidderId}`).emit("notification", notification);
       }
     }
-
-    await t.commit(); // إنهاء الترانساكشن بنجاح
 
     // جلب المزايدة الجديدة مع بيانات المستخدم
     const populatedBid = await Bid.findByPk(newBid.bid_id, {
@@ -74,10 +94,16 @@ export const createBid = async (req, res) => {
       bid: populatedBid
     });
 
-    res.status(201).json(populatedBid);
+    // إرسال الاستجابة
+    return res.status(201).json({
+      success: true,
+      message: "تم إنشاء المزايدة بنجاح",
+      bid: populatedBid,
+      current_price: auction.current_price
+    });
 
   } catch (error) {
-    await t.rollback(); // التراجع عن أي تغييرات عند الخطأ
+    await t.rollback(); // التراجع عند الخطأ
     console.error("❌ خطأ في إنشاء المزايدة:", error);
     return res.status(500).json({
       success: false,
@@ -86,6 +112,7 @@ export const createBid = async (req, res) => {
     });
   }
 };
+
 
 
 

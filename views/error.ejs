@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حدث خطأ - منصة مزادات</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        .error-container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            max-width: 600px;
+        }
+        .floating-element {
+            animation: float 6s ease-in-out infinite;
+        }
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .error-code {
+            font-size: 6rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .error-details {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 20px;
+            display: none;
+        }
+    </style>
+</head>
+<body class="gradient-bg">
+    <!-- شريط التنقل -->
+    <%- include('partials/navbar') %>
+
+    <!-- محتوى صفحة الخطأ -->
+    <main class="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div class="error-container w-full p-8 text-center">
+            <!-- الرمز البصري -->
+            <div class="mb-8 floating-element">
+                <div class="relative inline-block">
+                    <div class="w-32 h-32 bg-red-100 rounded-full flex items-center justify-center mx-auto">
+                        <i class="fas fa-exclamation-triangle text-5xl text-red-500"></i>
+                    </div>
+                    <div class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-16 h-16 flex items-center justify-center text-xl font-bold">
+                        <span id="errorCode">404</span>
+                    </div>
+                </div>
+            </div>
+            
+           <!-- رسالة الخطأ الديناميكية -->
+<div class="mb-8">
+    <h1 class="error-code mb-4" id="errorTitle"><%= success ? "نجاح" : "خطأ" %></h1>
+    <h2 class="text-2xl font-bold text-gray-800 mb-4" id="errorMessage"><%= message %></h2>
+    
+    <% if (missingFields && missingFields.length > 0) { %>
+        <div class="error-details block">
+            <h3 class="text-lg font-semibold text-red-700 mb-2">الحقول الناقصة:</h3>
+            <ul class="list-disc pr-5 text-right">
+                <% missingFields.forEach(field => { %>
+                    <li class="text-red-600"><%= field %></li>
+                <% }) %>
+            </ul>
+        </div>
+    <% } %>
+</div>
+
+            <!-- الإجراءات -->
+            <div class="mb-8">
+                <div class="flex flex-col sm:flex-row justify-center gap-4">
+                    <a href="index.html" class="pulse bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition duration-300 inline-flex items-center justify-center">
+                        <i class="fas fa-home ml-2"></i>
+                        العودة إلى الرئيسية
+                    </a>
+                    <a href="auctions.html" class="bg-white hover:bg-gray-100 text-blue-600 font-medium py-3 px-6 rounded-lg transition duration-300 border border-blue-600 inline-flex items-center justify-center">
+                        <i class="fas fa-gavel ml-2"></i>
+                        استكشاف المزادات
+                    </a>
+                   
+                </div>
+            </div>
+
+            <!-- البحث السريع -->
+            <div class="mb-8">
+                <p class="text-gray-600 mb-4">جرب البحث عن الصفحة التي تريدها:</p>
+                <div class="relative max-w-md mx-auto">
+                    <input type="text" placeholder="ابحث في الموقع..." class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button class="absolute left-3 top-3 text-gray-400 hover:text-blue-600 transition duration-300">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- روابط سريعة -->
+            <div class="border-t border-gray-200 pt-8">
+                <p class="text-gray-600 mb-4">ربما تريد زيارة إحدى هذه الصفحات:</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-md mx-auto">
+                    <a href="auctions.html" class="text-blue-600 hover:text-blue-800 transition duration-300 flex items-center justify-center">
+                        <i class="fas fa-gavel ml-2"></i>
+                        المزادات الحية
+                    </a>
+                    <a href="categories.html" class="text-blue-600 hover:text-blue-800 transition duration-300 flex items-center justify-center">
+                        <i class="fas fa-tags ml-2"></i>
+                        الفئات
+                    </a>
+                    <a href="how-to.html" class="text-blue-600 hover:text-blue-800 transition duration-300 flex items-center justify-center">
+                        <i class="fas fa-question-circle ml-2"></i>
+                        كيفية المشاركة
+                    </a>
+                    <a href="contact.html" class="text-blue-600 hover:text-blue-800 transition duration-300 flex items-center justify-center">
+                        <i class="fas fa-envelope ml-2"></i>
+                        اتصل بنا
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- تذييل الصفحة -->
+    <%- include('partials/footer') %>
+    <script>
+        // بيانات الأخطاء المختلفة
+        const errorTypes = {
+            404: {
+                title: "404",
+                message: "الصفحة غير موجودة",
+                description: "عذراً، لم نتمكن من العثور على الصفحة التي تبحث عنها.",
+                stack: "الرابط المطلوب غير موجود في الخادم. تحقق من كتابة العنوان بشكل صحيح."
+            },
+            500: {
+                title: "500",
+                message: "خطأ في الخادم",
+                description: "حدث خطأ داخلي في الخادم. نحن نعمل على إصلاحه.",
+                stack: "خطأ داخلي في الخادم. الرجاء المحاولة مرة أخرى لاحقاً."
+            },
+            403: {
+                title: "403",
+                message: "غير مصرح بالدخول",
+                description: "ليس لديك الصلاحية للوصول إلى هذه الصفحة.",
+                stack: "المستخدم الحالي لا يمتلك الصلاحيات الكافية للوصول إلى هذا المورد."
+            },
+            400: {
+                title: "400",
+                message: "طلب غير صالح",
+                description: "الطلب الذي أرسلته غير صالح أو به أخطاء.",
+                stack: "الطلب المرسل إلى الخادم يحتوي على بيانات غير صالحة أو مفقودة."
+            }
+        };
+
+        // الحصول على نوع الخطأ من URL (لأغراض العرض)
+        function getErrorTypeFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('error') || '404';
+        }
+
+        // تعيين بيانات الخطأ
+        function setErrorData(errorType) {
+            const errorData = errorTypes[errorType] || errorTypes['404'];
+            
+            document.getElementById('errorCode').textContent = errorData.title;
+            document.getElementById('errorTitle').textContent = errorData.title;
+            document.getElementById('errorMessage').textContent = errorData.message;
+            document.getElementById('errorDescription').textContent = errorData.description;
+            document.getElementById('errorStack').textContent = errorData.stack;
+        }
+
+        // إظهار/إخفاء تفاصيل الخطأ
+        document.getElementById('toggleDetails').addEventListener('click', function() {
+            const detailsElement = document.getElementById('errorDetails');
+            const isHidden = detailsElement.style.display === 'none' || detailsElement.style.display === '';
+            
+            if (isHidden) {
+                detailsElement.style.display = 'block';
+                this.innerHTML = '<i class="fas fa-code mr-1"></i> إخفاء تفاصيل الخطأ';
+            } else {
+                detailsElement.style.display = 'none';
+                this.innerHTML = '<i class="fas fa-code mr-1"></i> إظهار تفاصيل الخطأ';
+            }
+        });
+
+        // إعادة تحميل الصفحة
+        document.getElementById('reloadPage').addEventListener('click', function() {
+            window.location.reload();
+        });
+
+        // إضافة تفاعل للبحث
+        document.querySelector('input[type="text"]').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const query = this.value.trim();
+                if (query) {
+                    // في التطبيق الحقيقي، هنا سيتم توجيه المستخدم إلى صفحة البحث
+                    alert(`سيتم البحث عن: "${query}" (هذه رسالة استعراضية فقط)`);
+                }
+            }
+        });
+
+        // تهيئة الصفحة عند التحميل
+        document.addEventListener('DOMContentLoaded', function() {
+            // تعيين نوع الخطأ بناءً على URL
+            const errorType = getErrorTypeFromURL();
+            setErrorData(errorType);
+            
+            // إضافة تأثير ظهور تدريجي للعناصر
+            const elements = document.querySelectorAll('.error-container > *');
+            elements.forEach((element, index) => {
+                element.style.opacity = '0';
+                element.style.transform = 'translateY(20px)';
+                
+                setTimeout(() => {
+                    element.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                    element.style.opacity = '1';
+                    element.style.transform = 'translateY(0)';
+                }, index * 200);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>كيفية المشاركة في المزاد - منصة مزادات</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        .step-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .step-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+        .step-number {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+        }
+        .timeline {
+            position: relative;
+            padding-right: 30px;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(to bottom, #3b82f6, #1d4ed8);
+            border-radius: 2px;
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 40px;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            right: -33px;
+            top: 20px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #3b82f6;
+            border: 4px solid white;
+            box-shadow: 0 0 0 3px #3b82f6;
+        }
+        .feature-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            text-align: center;
+            height: 100%;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+        .role-selector {
+            display: flex;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 40px;
+        }
+        .role-option {
+            flex: 1;
+            padding: 20px;
+            text-align: center;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-bottom: 4px solid transparent;
+        }
+        .role-option.active {
+            background: #eff6ff;
+            border-bottom: 4px solid #3b82f6;
+        }
+        .role-option h3 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .role-content {
+            display: none;
+        }
+        .role-content.active {
+            display: block;
+        }
+        .accordion-item {
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+        .accordion-header {
+            padding: 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            font-weight: 600;
+            transition: background 0.3s ease;
+        }
+        .accordion-header:hover {
+            background: #f8fafc;
+        }
+        .accordion-content {
+            padding: 0 20px;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .accordion-item.active .accordion-content {
+            padding: 0 20px 20px;
+            max-height: 500px;
+        }
+        .accordion-item.active .accordion-header {
+            background: #eff6ff;
+        }
+        .accordion-icon {
+            transition: transform 0.3s ease;
+        }
+        .accordion-item.active .accordion-icon {
+            transform: rotate(180deg);
+        }
+    </style>
+</head>
+<body class="gradient-bg">
+    <!-- شريط التنقل -->
+    <%- include('partials/navbar') %>
+
+    <!-- محتوى الصفحة -->
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        <!-- العنوان الرئيسي -->
+        <section class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-gray-800 mb-4">كيفية المشاركة في المزادات</h1>
+            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                اكتشف كيف يمكنك الانضمام إلى منصتنا والمشاركة في المزادات بسهولة وسلاسة. سواء كنت مشترياً أو بائعاً، لدينا كل ما تحتاجه لبدء رحلتك.
+            </p>
+        </section>
+
+        <!-- اختيار الدور -->
+        <section class="mb-12">
+            <div class="role-selector">
+                <div class="role-option active" data-role="buyer">
+                    <i class="fas fa-shopping-cart text-3xl text-blue-500 mb-3"></i>
+                    <h3>أريد الشراء</h3>
+                    <p class="text-gray-600">تعرف على كيفية المشاركة في المزادات والشراء</p>
+                </div>
+                <div class="role-option" data-role="seller">
+                    <i class="fas fa-store text-3xl text-green-500 mb-3"></i>
+                    <h3>أريد البيع</h3>
+                    <p class="text-gray-600">تعرف على كيفية عرض منتجاتك للبيع في المزادات</p>
+                </div>
+            </div>
+
+            <!-- محتوى المشتري -->
+            <div id="buyer-content" class="role-content active">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+                    <!-- الخطوات -->
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800 mb-6">خطوات المشاركة كمشتري</h2>
+                        <div class="timeline">
+                            <!-- الخطوة 1 -->
+                            <div class="timeline-item">
+                                <div class="step-card p-6">
+                                    <div class="step-number">1</div>
+                                    <h3 class="text-xl font-bold text-gray-800 mb-3">إنشاء حساب</h3>
+                                    <p class="text-gray-600 mb-4">سجل في المنصة ببياناتك الصحيحة وقم بتفعيل حسابك عبر البريد الإلكتروني.</p>
+                                    <ul class="text-gray-600 space-y-2 pr-4">
+                                        <li class="flex items-start">
+                                            <i class="fas fa-check text-green-500 mt-1 ml-2"></i>
+                                            <span>أدخل بياناتك الشخصية بدقة</span>
+                                        </li>
+                                        <li class="flex items-start">
+                                            <i class="fas fa-check text-green-500 mt-1 ml-2"></i>
+                                            <span>تحقق من بريدك الإلكتروني</span>
+                                        </li>
+                                        <li class="flex items-start">
+                                            <i class="fas fa-check text-green-500 mt-1 ml-2"></i>
+                                            <span>أكمل ملفك الشخصي</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- الخطوة 2 -->
+                            <div class="timeline-item">
+                                <div class="step-card p-6">
+                                    <div class="step-number">2</div>
+                                    <h3 class="text-xl font-bold text-gray-800 mb-3">استعرض المزادات</h3>
+                                    <p class="text-gray-600 mb-4">تصفح آلاف المزادات النشطة وابحث عن المنتجات التي تهمك باستخدام فلاتر البحث المتقدمة.</p>
+                                    <ul class="text-gray-600 space-y-2 pr-4">
+                                        <li class="flex items-start">
+                                            <i class="fas fa-check text-green-500 mt-1 ml-2"></i>
+                                            <span>استخدم الفئات والتصنيفات</span>
+                                        </li>
+                                        <li class="flex items-start">
+                                            <i class="fas fa-check text-green-500 mt-1 ml-2"></i>
+                                            <span>حدد نطاق السعر المناسب</span>
+                                        </li>
+                                        <li class="flex items-start">
+                                            <i class="fas fa-check text-green-500 mt-1 ml-2"></i>
+                                            <span>تابع المزادات المفضلة</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- الخطوة 3 -->
+                            <div class="timeline-item">
+                                <div class="step-card p-6">
+                                    <div class="step-number">3</div>
+                                    <h3 class="text-xl font-bold text-gray-800 mb-3">شارك في المزايدة</h3>
+                                    <p class="text-gray-600 mb-4">ضع مزايدتك مع مراعاة الحد الأدنى للزيادة وتابع المنافسة حتى انتهاء المزاد.</p>
+                                    <ul class="text-gray-600 space-y-2 pr-4">
+                                        <li class="flex items-start">
+                                            <i class="fas fa-check text-green-500 mt-1 ml-2"></i>
+                                            <span>اقرأ شروط المزاد بعناية</span>
+                                        </li>
+                                        <li class="flex items-start">
+                                            <i class="fas fa-check text-green-500 mt-1 ml-2"></i>
+                                            <span>ضع مزايدة ضمن ميزانيتك</span>
+                                        </li>
+                                        <li class="flex items-start">
+                                            <i class="fas fa-check text-green-500 mt-1 ml-2"></i>
+                                            <span>استخدم المزايدة التلقائية إذا رغبت</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- الخطوة 4 -->
+                            <div class="timeline-item">
+                                <div class="step-card p-6">
+                                    <div class="step-number">4</div>
+                                    <h3 class="text-xl font-bold text-gray-800 mb-3">اكمل عملية الشراء</h3>
+                                    <p class="text-gray-600 mb-4">بعد الفوز بالمزاد، قم بإتمام عملية الدفع واستلام المنتج حسب الطريقة المتفق عليها.</p>
+                                    <ul class="text-gray-600 space-y-2 pr-4">
+                                        <li class="flex items-start">
+                                            <i class="fas fa-check text-green-500 mt-1 ml-2"></i>
+                                            <span>ادفع المبلغ عبر القنوات الآمنة</span>
+                                        </li>
+                                        <li class="flex items-start">
+                                            <i class="fas fa-check text-green-500 mt-1 ml-2"></i>
+                                            <span>تواصل مع البائع لترتيب الاستلام</span>
+                                        </li>
+                                        <li class="flex items-start">
+                                            <i class="fas fa-check text-green-500 mt-1 ml-2"></i>
+                                            <span>قم بتقييم تجربتك</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- نصائح وإحصائيات -->
+                    <div>
+                        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">نصائح للمشتري الناجح</h3>
+                            <div class="space-y-4">
+                                <div class="flex items-start">
+                                    <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center ml-3 flex-shrink-0">
+                                        <i class="fas fa-search text-blue-600"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold text-gray-800">ابحث جيداً</h4>
+                                        <p class="text-gray-600 text-sm">اقرأ وصف المنتج بعناية وشاهد جميع الصور قبل المزايدة.</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start">
+                                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center ml-3 flex-shrink-0">
+                                        <i class="fas fa-clock text-green-600"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold text-gray-800">راقب الوقت</h4>
+                                        <p class="text-gray-600 text-sm">تابع وقت انتهاء المزاد عن كثب لتضع مزايدتك في اللحظة المناسبة.</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start">
+                                    <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center ml-3 flex-shrink-0">
+                                        <i class="fas fa-dollar-sign text-purple-600"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold text-gray-800">حدد ميزانيتك</h4>
+                                        <p class="text-gray-600 text-sm">حدد الحد الأقصى للمبلغ الذي ترغب في دفعه مسبقاً والتزم به.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
+                            <h3 class="text-xl font-bold mb-4">إحصائيات مهمة</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="text-center">
+                                    <p class="text-3xl font-bold">85%</p>
+                                    <p class="text-sm">من المستخدمين يفوزون بأول مزاد خلال أسبوع</p>
+                                </div>
+                                <div class="text-center">
+                                    <p class="text-3xl font-bold">40%</p>
+                                    <p class="text-sm">توفير متوسط على سعر السوق</p>
+                                </div>
+                                <div class="text-center">
+                                    <p class="text-3xl font-bold">95%</p>
+                                    <p class="text-sm">رضا العملاء عن تجربة الشراء</p>
+                                </div>
+                                <div class="text-center">
+                                    <p class="text-3xl font-bold">24/7</p>
+                                    <p class="text-sm">دعم فني متاح على مدار الساعة</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- محتوى البائع -->
+            <div id="seller-content" class="role-content">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+                    <!-- الخطوات -->
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800 mb-6">خطوات البيع في المزادات</h2>
+                        <div class="timeline">
+                            <!-- الخطوة 1 -->
+                            <div class="timeline-item">
+                                <div class="step-card p-6">
+                                    <div class="step-number">1</div>
+                                    <h3 class="text-xl font-bold text-gray-800 mb-3">إنشاء حساب بائع</h3>
+                                    <p class="text-gray-600 mb-4">سجل كبائع وأكمل عملية التحقق من الحساب لتتمكن من عرض منتجاتك.</p>
+                                    <ul class="text-gray-600 space-y-2 pr-4">
+                                        <li class="flex items-start">
+                                            <i class="fas fa-check text-green-500 mt-1 ml-2"></i>
+                                            <span>أدخل بياناتك التجارية</span>
+                                        </li>
+                                        <li class="flex items-start">
+                                            <i class="fas fa-check text-green-500 mt-1 ml-2"></i>
+                                            <span>قدم المستندات المطلوبة</span>
+                                        </li>
+                                        <li class="flex items-start">
+                                            <i class="fas fa-check text-green-500 mt-1 ml-2"></i>
+                                            <span>انتظر موافقة الإدارة</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- الخطوة 2 -->
+                            <div class="timeline-item">
+                                <div class="step-card p-6">
+                                    <div class="step-number">2</div>
+                                    <h3 class="text-xl font-bold text-gray-800 mb-3">إضافة المنتج</h3>
+                                    <p class="text-gray-600 mb-4">قم بإضافة منتجك مع وصف دقيق وصور واضحة وحدد شروط البيع.</p>
+                                    <ul class="text-gray-600 space-y-2 pr-4">
+                                        <li class="flex items-start">
+                                            <i class="fas fa-check text-green-500 mt-1 ml-2"></i>
+                                            <span>أضف صوراً عالية الجودة</span>
+                                        </li>
+                                        <li class="flex items-start">
+                                            <i class="fas fa-check text-green-500 mt-1 ml-2"></i>
+                                            <span>اكتب وصفاً شاملاً للمنتج</span>
+                                        </li>
+                                        <li class="flex items-start">
+                                            <i class="fas fa-check text-green-500 mt-1 ml-2"></i>
+                                            <span>حدد السعر الابتدائي والمدة</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- الخطوة 3 -->
+                            <div class="timeline-item">
+                                <div class="step-card p-6">
+                                    <div class="step-number">3</div>
+                                    <h3 class="text-xl font-bold text-gray-800 mb-3">إدارة المزاد</h3>
+                                    <p class="text-gray-600 mb-4">تابع مزادك وأجب على استفسارات المشترين وادفع عمولة المنصة بعد البيع.</p>
+                                    <ul class="text-gray-600 space-y-2 pr-4">
+                                        <li class="flex items-start">
+                                            <i class="fas fa-check text-green-500 mt-1 ml-2"></i>
+                                            <span>رد على استفسارات المشترين</span>
+                                        </li>
+                                        <li class="flex items-start">
+                                            <i class="fas fa-check text-green-500 mt-1 ml-2"></i>
+                                            <span>تابع تقدم المزاد</span>
+                                        </li>
+                                        <li class="flex items-start">
+                                            <i class="fas fa-check text-green-500 mt-1 ml-2"></i>
+                                            <span>ادفع عمولة المنصة</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- الخطوة 4 -->
+                            <div class="timeline-item">
+                                <div class="step-card p-6">
+                                    <div class="step-number">4</div>
+                                    <h3 class="text-xl font-bold text-gray-800 mb-3">إتمام البيع</h3>
+                                    <p class="text-gray-600 mb-4">بعد انتهاء المزاد، تواصل مع المشتري الفائز ورتب عملية التسليم واستلم المبلغ.</p>
+                                    <ul class="text-gray-600 space-y-2 pr-4">
+                                        <li class="flex items-start">
+                                            <i class="fas fa-check text-green-500 mt-1 ml-2"></i>
+                                            <span>تواصل مع المشتري الفائز</span>
+                                        </li>
+                                        <li class="flex items-start">
+                                            <i class="fas fa-check text-green-500 mt-1 ml-2"></i>
+                                            <span>رتب عملية التسليم</span>
+                                        </li>
+                                        <li class="flex items-start">
+                                            <i class="fas fa-check text-green-500 mt-1 ml-2"></i>
+                                            <span>استلم المبلغ عبر القنوات الآمنة</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- نصائح وإحصائيات -->
+                    <div>
+                        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">نصائح للبائع الناجح</h3>
+                            <div class="space-y-4">
+                                <div class="flex items-start">
+                                    <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center ml-3 flex-shrink-0">
+                                        <i class="fas fa-camera text-blue-600"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold text-gray-800">صور عالية الجودة</h4>
+                                        <p class="text-gray-600 text-sm">استخدم صوراً واضحة ومشرقة من زوايا متعددة للمنتج.</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start">
+                                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center ml-3 flex-shrink-0">
+                                        <i class="fas fa-pen text-green-600"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold text-gray-800">وصف دقيق</h4>
+                                        <p class="text-gray-600 text-sm">اكتب وصفاً شاملاً يوضح مزايا المنتج وحالته بدقة.</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start">
+                                    <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center ml-3 flex-shrink-0">
+                                        <i class="fas fa-tag text-purple-600"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold text-gray-800">سعر معقول</h4>
+                                        <p class="text-gray-600 text-sm">حدد سعراً ابتدائياً جذاباً يشجع على المشاركة.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white">
+                            <h3 class="text-xl font-bold mb-4">مزايا البيع في مزاد</h3>
+                            <div class="space-y-3">
+                                <div class="flex items-center">
+                                    <i class="fas fa-chart-line ml-3"></i>
+                                    <span>زيادة متوسط سعر البيع بنسبة 25%</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fas fa-users ml-3"></i>
+                                    <span>الوصول إلى آلاف المشترين المحتملين</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fas fa-bolt ml-3"></i>
+                                    <span>بيع سريع خلال أيام قليلة</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fas fa-shield-alt ml-3"></i>
+                                    <span>معاملات آمنة ومضمونة</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- الأسئلة الشائعة -->
+        <section class="mb-12">
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-bold text-gray-800">أسئلة شائعة</h2>
+                <p class="text-gray-600 mt-2">إجابات على أكثر الاستفسارات شيوعاً حول المشاركة في المزادات</p>
+            </div>
+
+            <div class="max-w-4xl mx-auto">
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <span>ما هي رسوم المشاركة في المزادات؟</span>
+                        <i class="accordion-icon fas fa-chevron-down text-gray-500"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <p class="text-gray-600">المشاركة في المزادات كـمشتري مجانية تماماً. أما البائعون فتدفع عمولة بنسبة 5% من سعر البيع النهائي بعد انتهاء المزاد بنجاح.</p>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <span>كيف أضمن أن المنتجات أصلية؟</span>
+                        <i class="accordion-icon fas fa-chevron-down text-gray-500"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <p class="text-gray-600">جميع البائعون في منصتنا يتم التحقق منهم، ونشجع المشترين على مراجعة تقييمات البائعين. كما نوفر ضمان استرداد الأموال في حال عدم مطابقة المنتج للوصف.</p>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <span>ما هو الحد الأدنى للزيادة في المزاد؟</span>
+                        <i class="accordion-icon fas fa-chevron-down text-gray-500"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <p class="text-gray-600">الحد الأدنى للزيادة يحدده البائع عند إنشاء المزاد، وعادة ما يكون بين 1% إلى 5% من السعر الحالي. سيتم إعلامك بالحد الأدنى للزيادة قبل وضع مزايدتك.</p>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header">
+                        <span>كيف يمكنني سحب منتجي من المزاد؟</span>
+                        <i class="accordion-icon fas fa-chevron-down text-gray-500"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <p class="text-gray-600">يمكنك سحب منتجك من المزاد قبل بدء المزايدات دون أي رسوم. بعد بدء المزايدات، يمكن السحب مع دفع رسوم رمزية بنسبة 2% من السعر الابتدائي.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- دعوة للعمل -->
+        <section class="text-center bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl shadow-xl p-12 text-white">
+            <h2 class="text-3xl font-bold mb-4">جاهز للبدء؟</h2>
+            <p class="text-xl mb-8 max-w-2xl mx-auto">انضم إلى آلاف المستخدمين وابدأ رحلتك في عالم المزادات اليوم</p>
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <a href="register.html" class="bg-white text-blue-600 hover:bg-gray-100 font-bold py-3 px-8 rounded-lg transition duration-300">
+                    إنشاء حساب جديد
+                </a>
+                <a href="auctions.html" class="bg-transparent border-2 border-white text-white hover:bg-white hover:text-blue-600 font-bold py-3 px-8 rounded-lg transition duration-300">
+                    استعرض المزادات الحية
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <!-- تذييل الصفحة -->
+    <%- include('partials/footer') %>
+
+    <script>
+        // تبديل بين المشتري والبائع
+        document.querySelectorAll('.role-option').forEach(option => {
+            option.addEventListener('click', function() {
+                // إزالة النشاط من جميع الخيارات
+                document.querySelectorAll('.role-option').forEach(opt => {
+                    opt.classList.remove('active');
+                });
+                
+                // إضافة النشاط للخيار المحدد
+                this.classList.add('active');
+                
+                // إخفاء جميع المحتويات
+                document.querySelectorAll('.role-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                
+                // إظهار المحتوى المناسب
+                const role = this.getAttribute('data-role');
+                document.getElementById(`${role}-content`).classList.add('active');
+            });
+        });
+
+        // الأكورديون للأسئلة الشائعة
+        document.querySelectorAll('.accordion-header').forEach(header => {
+            header.addEventListener('click', function() {
+                const item = this.parentElement;
+                const isActive = item.classList.contains('active');
+                
+                // إغلاق جميع العناصر النشطة
+                document.querySelectorAll('.accordion-item').forEach(accItem => {
+                    accItem.classList.remove('active');
+                });
+                
+                // فتح العنصر الحالي إذا لم يكن نشطاً
+                if (!isActive) {
+                    item.classList.add('active');
+                }
+            });
+        });
+
+        // تأثيرات الظهور التدريجي
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.step-card, .feature-card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                
+                setTimeout(() => {
+                    card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 200);
+            });
+        });
+    </script>
+</body>
+</html>

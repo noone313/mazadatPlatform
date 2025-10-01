@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الفئات - منصة مزادات</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        .category-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            overflow: hidden;
+            position: relative;
+        }
+        .category-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+        .category-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .stats-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .stats-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+        .subcategory-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .subcategory-item {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 1px solid #e2e8f0;
+        }
+        .subcategory-item:hover {
+            background: #eff6ff;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        .trending-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        .filter-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        .view-toggle {
+            display: flex;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .view-toggle button {
+            padding: 8px 16px;
+            background: white;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .view-toggle button.active {
+            background: #3b82f6;
+            color: white;
+        }
+        .category-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            font-size: 1.8rem;
+        }
+        .grid-view .category-card {
+            margin-bottom: 30px;
+        }
+        .list-view .category-item {
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            display: flex;
+            transition: all 0.3s ease;
+        }
+        .list-view .category-item:hover {
+            transform: translateX(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="gradient-bg">
+    <!-- شريط التنقل -->
+    <%- include('partials/navbar') %>
+
+    <!-- محتوى صفحة الفئات -->
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        <!-- العنوان الرئيسي -->
+        <section class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-gray-800 mb-4">تصفح الفئات</h1>
+            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                اكتشف آلاف المنتجات في مختلف الفئات. اختر ما يناسبك وابدأ رحلتك في عالم المزادات.
+            </p>
+        </section>
+
+        <!-- الإحصائيات السريعة -->
+        <section class="mb-8">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="stats-card">
+                    <div class="category-icon bg-blue-100 text-blue-600">
+                        <i class="fas fa-tags"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800">24</h3>
+                    <p class="text-gray-600">فئة رئيسية</p>
+                </div>
+                <div class="stats-card">
+                    <div class="category-icon bg-green-100 text-green-600">
+                        <i class="fas fa-boxes"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800">156</h3>
+                    <p class="text-gray-600">فئة فرعية</p>
+                </div>
+                <div class="stats-card">
+                    <div class="category-icon bg-purple-100 text-purple-600">
+                        <i class="fas fa-gavel"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800">5,248</h3>
+                    <p class="text-gray-600">مزاد نشط</p>
+                </div>
+                <div class="stats-card">
+                    <div class="category-icon bg-yellow-100 text-yellow-600">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800">12.5M</h3>
+                    <p class="text-gray-600">قيمة المبيعات</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- البحث والتصفية -->
+        <section class="mb-8">
+            <div class="filter-section">
+                <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div class="w-full md:w-auto">
+                        <div class="relative">
+                            <input type="text" placeholder="ابحث عن فئة..." class="w-full md:w-80 px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <button class="absolute left-3 top-3 text-gray-400 hover:text-blue-600 transition duration-300">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="view-toggle">
+                            <button class="active" id="gridViewBtn"><i class="fas fa-th-large"></i></button>
+                            <button id="listViewBtn"><i class="fas fa-list"></i></button>
+                        </div>
+                        <select class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">ترتيب حسب: الشعبية</option>
+                            <option value="name">الاسم</option>
+                            <option value="auctions">عدد المزادات</option>
+                            <option value="newest">الأحدث</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- عرض الفئات (وضع الشبكة) -->
+        <section id="categoriesGrid" class="grid-view">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- فئة السيارات -->
+                <div class="category-card">
+                    <div class="relative h-48 bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center">
+                        <i class="fas fa-car text-6xl text-white opacity-80"></i>
+                        <div class="category-badge text-blue-600">مركبات</div>
+                        <div class="trending-badge">رائج</div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">سيارات</h3>
+                        <p class="text-gray-600 mb-4">سيارات جديدة ومستعملة بجميع الماركات والموديلات</p>
+                        
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <p class="text-sm text-gray-500">المزادات النشطة</p>
+                                <p class="text-lg font-bold text-blue-600">1,245</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm text-gray-500">متوسط السعر</p>
+                                <p class="text-lg font-bold text-gray-800">85,000 ر.س</p>
+                            </div>
+                        </div>
+                        
+                        <div class="subcategory-grid">
+                            <div class="subcategory-item">
+                                <i class="fas fa-car text-blue-500 mb-2"></i>
+                                <p class="text-sm font-medium">سيدان</p>
+                            </div>
+                            <div class="subcategory-item">
+                                <i class="fas fa-truck text-blue-500 mb-2"></i>
+                                <p class="text-sm font-medium">دفع رباعي</p>
+                            </div>
+                            <div class="subcategory-item">
+                                <i class="fas fa-motorcycle text-blue-500 mb-2"></i>
+                                <p class="text-sm font-medium">دراجات نارية</p>
+                            </div>
+                        </div>
+                        
+                        <a href="auctions.html?category=cars" class="block w-full bg-blue-600 hover:bg-blue-700 text-white text-center font-medium py-3 px-4 rounded-lg transition duration-300 mt-4">
+                            استعرض المزادات
+                        </a>
+                    </div>
+                </div>
+
+                <!-- فئة العقارات -->
+                <div class="category-card">
+                    <div class="relative h-48 bg-gradient-to-r from-green-500 to-green-600 flex items-center justify-center">
+                        <i class="fas fa-home text-6xl text-white opacity-80"></i>
+                        <div class="category-badge text-green-600">عقارات</div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">عقارات</h3>
+                        <p class="text-gray-600 mb-4">شقق، فلل، مزارع، وأراضي استثمارية</p>
+                        
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <p class="text-sm text-gray-500">المزادات النشطة</p>
+                                <p class="text-lg font-bold text-green-600">892</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm text-gray-500">متوسط السعر</p>
+                                <p class="text-lg font-bold text-gray-800">1.2M ر.س</p>
+                            </div>
+                        </div>
+                        
+                        <div class="subcategory-grid">
+                            <div class="subcategory-item">
+                                <i class="fas fa-building text-green-500 mb-2"></i>
+                                <p class="text-sm font-medium">شقق</p>
+                            </div>
+                            <div class="subcategory-item">
+                                <i class="fas fa-vector-square text-green-500 mb-2"></i>
+                                <p class="text-sm font-medium">فلل</p>
+                            </div>
+                            <div class="subcategory-item">
+                                <i class="fas fa-tractor text-green-500 mb-2"></i>
+                                <p class="text-sm font-medium">مزارع</p>
+                            </div>
+                        </div>
+                        
+                        <a href="auctions.html?category=realestate" class="block w-full bg-green-600 hover:bg-green-700 text-white text-center font-medium py-3 px-4 rounded-lg transition duration-300 mt-4">
+                            استعرض المزادات
+                        </a>
+                    </div>
+                </div>
+
+                <!-- فئة الإلكترونيات -->
+                <div class="category-card">
+                    <div class="relative h-48 bg-gradient-to-r from-purple-500 to-purple-600 flex items-center justify-center">
+                        <i class="fas fa-laptop text-6xl text-white opacity-80"></i>
+                        <div class="category-badge text-purple-600">إلكترونيات</div>
+                        <div class="trending-badge">متنامي</div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">إلكترونيات</h3>
+                        <p class="text-gray-600 mb-4">أحدث الأجهزة الإلكترونية والكهربائية</p>
+                        
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <p class="text-sm text-gray-500">المزادات النشطة</p>
+                                <p class="text-lg font-bold text-purple-600">2,156</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm text-gray-500">متوسط السعر</p>
+                                <p class="text-lg font-bold text-gray-800">3,500 ر.س</p>
+                            </div>
+                        </div>
+                        
+                        <div class="subcategory-grid">
+                            <div class="subcategory-item">
+                                <i class="fas fa-mobile-alt text-purple-500 mb-2"></i>
+                                <p class="text-sm font-medium">هواتف</p>
+                            </div>
+                            <div class="subcategory-item">
+                                <i class="fas fa-laptop text-purple-500 mb-2"></i>
+                                <p class="text-sm font-medium">لابتوبات</p>
+                            </div>
+                            <div class="subcategory-item">
+                                <i class="fas fa-tv text-purple-500 mb-2"></i>
+                                <p class="text-sm font-medium">تلفزيونات</p>
+                            </div>
+                        </div>
+                        
+                        <a href="auctions.html?category=electronics" class="block w-full bg-purple-600 hover:bg-purple-700 text-white text-center font-medium py-3 px-4 rounded-lg transition duration-300 mt-4">
+                            استعرض المزادات
+                        </a>
+                    </div>
+                </div>
+
+                <!-- فئة المجوهرات -->
+                <div class="category-card">
+                    <div class="relative h-48 bg-gradient-to-r from-yellow-500 to-yellow-600 flex items-center justify-center">
+                        <i class="fas fa-gem text-6xl text-white opacity-80"></i>
+                        <div class="category-badge text-yellow-600">مجوهرات</div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">مجوهرات</h3>
+                        <p class="text-gray-600 mb-4">مجوهرات فاخرة وساعات نادرة من أشهر الماركات</p>
+                        
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <p class="text-sm text-gray-500">المزادات النشطة</p>
+                                <p class="text-lg font-bold text-yellow-600">745</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm text-gray-500">متوسط السعر</p>
+                                <p class="text-lg font-bold text-gray-800">25,000 ر.س</p>
+                            </div>
+                        </div>
+                        
+                        <div class="subcategory-grid">
+                            <div class="subcategory-item">
+                                <i class="fas fa-ring text-yellow-500 mb-2"></i>
+                                <p class="text-sm font-medium">خواتم</p>
+                            </div>
+                            <div class="subcategory-item">
+                                <i class="fas fa-clock text-yellow-500 mb-2"></i>
+                                <p class="text-sm font-medium">ساعات</p>
+                            </div>
+                            <div class="subcategory-item">
+                                <i class="fas fa-necklace text-yellow-500 mb-2"></i>
+                                <p class="text-sm font-medium">قلادات</p>
+                            </div>
+                        </div>
+                        
+                        <a href="auctions.html?category=jewelry" class="block w-full bg-yellow-600 hover:bg-yellow-700 text-white text-center font-medium py-3 px-4 rounded-lg transition duration-300 mt-4">
+                            استعرض المزادات
+                        </a>
+                    </div>
+                </div>
+
+                <!-- فئة الفنون -->
+                <div class="category-card">
+                    <div class="relative h-48 bg-gradient-to-r from-red-500 to-red-600 flex items-center justify-center">
+                        <i class="fas fa-palette text-6xl text-white opacity-80"></i>
+                        <div class="category-badge text-red-600">فنون</div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">فنون</h3>
+                        <p class="text-gray-600 mb-4">لوحات فنية، تحف نادرة، وأعمال فنية مميزة</p>
+                        
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <p class="text-sm text-gray-500">المزادات النشطة</p>
+                                <p class="text-lg font-bold text-red-600">432</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm text-gray-500">متوسط السعر</p>
+                                <p class="text-lg font-bold text-gray-800">18,500 ر.س</p>
+                            </div>
+                        </div>
+                        
+                        <div class="subcategory-grid">
+                            <div class="subcategory-item">
+                                <i class="fas fa-paint-brush text-red-500 mb-2"></i>
+                                <p class="text-sm font-medium">لوحات</p>
+                            </div>
+                            <div class="subcategory-item">
+                                <i class="fas fa-sculpture text-red-500 mb-2"></i>
+                                <p class="text-sm font-medium">منحوتات</p>
+                            </div>
+                            <div class="subcategory-item">
+                                <i class="fas fa-camera text-red-500 mb-2"></i>
+                                <p class="text-sm font-medium">تصوير فني</p>
+                            </div>
+                        </div>
+                        
+                        <a href="auctions.html?category=art" class="block w-full bg-red-600 hover:bg-red-700 text-white text-center font-medium py-3 px-4 rounded-lg transition duration-300 mt-4">
+                            استعرض المزادات
+                        </a>
+                    </div>
+                </div>
+
+                <!-- فئة الأثاث -->
+                <div class="category-card">
+                    <div class="relative h-48 bg-gradient-to-r from-indigo-500 to-indigo-600 flex items-center justify-center">
+                        <i class="fas fa-couch text-6xl text-white opacity-80"></i>
+                        <div class="category-badge text-indigo-600">أثاث</div>
+                        <div class="trending-badge">جديد</div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">أثاث</h3>
+                        <p class="text-gray-600 mb-4">أثاث منزلي ومكتبي فاخر ومستعمل بحالة جيدة</p>
+                        
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <p class="text-sm text-gray-500">المزادات النشطة</p>
+                                <p class="text-lg font-bold text-indigo-600">678</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm text-gray-500">متوسط السعر</p>
+                                <p class="text-lg font-bold text-gray-800">7,200 ر.س</p>
+                            </div>
+                        </div>
+                        
+                        <div class="subcategory-grid">
+                            <div class="subcategory-item">
+                                <i class="fas fa-bed text-indigo-500 mb-2"></i>
+                                <p class="text-sm font-medium">غرف نوم</p>
+                            </div>
+                            <div class="subcategory-item">
+                                <i class="fas fa-chair text-indigo-500 mb-2"></i>
+                                <p class="text-sm font-medium">غرف معيشة</p>
+                            </div>
+                            <div class="subcategory-item">
+                                <i class="fas fa-utensils text-indigo-500 mb-2"></i>
+                                <p class="text-sm font-medium">طاولات طعام</p>
+                            </div>
+                        </div>
+                        
+                        <a href="auctions.html?category=furniture" class="block w-full bg-indigo-600 hover:bg-indigo-700 text-white text-center font-medium py-3 px-4 rounded-lg transition duration-300 mt-4">
+                            استعرض المزادات
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- عرض الفئات (وضع القائمة) - مخفي افتراضيًا -->
+        <section id="categoriesList" class="list-view hidden">
+            <!-- عنصر فئة في وضع القائمة -->
+            <div class="category-item">
+                <div class="w-1/4 mr-6">
+                    <div class="bg-gradient-to-r from-blue-500 to-blue-600 h-32 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-car text-4xl text-white"></i>
+                    </div>
+                </div>
+                <div class="flex-1">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-800">سيارات</h3>
+                            <p class="text-gray-600 mt-1">سيارات جديدة ومستعملة بجميع الماركات والموديلات</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">مركبات</span>
+                            <span class="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded mr-2">رائج</span>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-sm text-gray-500">المزادات النشطة</p>
+                            <p class="text-lg font-bold text-blue-600">1,245</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">متوسط السعر</p>
+                            <p class="text-lg font-bold text-gray-800">85,000 ر.س</p>
+                        </div>
+                        <div class="subcategory-grid" style="grid-template-columns: repeat(3, 1fr);">
+                            <div class="subcategory-item">
+                                <p class="text-sm font-medium">سيدان</p>
+                            </div>
+                            <div class="subcategory-item">
+                                <p class="text-sm font-medium">دفع رباعي</p>
+                            </div>
+                            <div class="subcategory-item">
+                                <p class="text-sm font-medium">دراجات نارية</p>
+                            </div>
+                        </div>
+                        <a href="auctions.html?category=cars" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition duration-300">
+                            استعرض المزادات
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- يمكن إضافة المزيد من عناصر القائمة هنا -->
+        </section>
+
+        <!-- دعوة للعمل -->
+        <section class="text-center bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl shadow-xl p-12 text-white mt-12">
+            <h2 class="text-3xl font-bold mb-4">لم تجد ما تبحث عنه؟</h2>
+            <p class="text-xl mb-8 max-w-2xl mx-auto">يمكنك دائماً البحث عن منتج معين أو اقتراح فئة جديدة نضيفها إلى منصتنا</p>
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <a href="auctions.html" class="bg-white text-blue-600 hover:bg-gray-100 font-bold py-3 px-8 rounded-lg transition duration-300">
+                    البحث في المزادات
+                </a>
+                <a href="contact.html" class="bg-transparent border-2 border-white text-white hover:bg-white hover:text-blue-600 font-bold py-3 px-8 rounded-lg transition duration-300">
+                    اقتراح فئة جديدة
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <!-- تذييل الصفحة -->
+    <%- include('partials/footer') %>
+
+    <script>
+        // تبديل بين وضع الشبكة ووضع القائمة
+        document.getElementById('gridViewBtn').addEventListener('click', function() {
+            document.getElementById('categoriesGrid').classList.remove('hidden');
+            document.getElementById('categoriesList').classList.add('hidden');
+            document.getElementById('gridViewBtn').classList.add('active');
+            document.getElementById('listViewBtn').classList.remove('active');
+        });
+
+        document.getElementById('listViewBtn').addEventListener('click', function() {
+            document.getElementById('categoriesGrid').classList.add('hidden');
+            document.getElementById('categoriesList').classList.remove('hidden');
+            document.getElementById('gridViewBtn').classList.remove('active');
+            document.getElementById('listViewBtn').classList.add('active');
+        });
+
+        // تأثيرات الظهور التدريجي
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.category-card, .stats-card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                
+                setTimeout(() => {
+                    card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 150);
+            });
+            
+            // البحث التفاعلي
+            const searchInput = document.querySelector('input[type="text"]');
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const categories = document.querySelectorAll('.category-card, .category-item');
+                
+                categories.forEach(category => {
+                    const title = category.querySelector('h3').textContent.toLowerCase();
+                    const description = category.querySelector('p').textContent.toLowerCase();
+                    
+                    if (title.includes(searchTerm) || description.includes(searchTerm)) {
+                        category.style.display = 'block';
+                    } else {
+                        category.style.display = 'none';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
