@@ -1,33 +1,35 @@
-import { User, Auction, Bid, Payment, Notification, AuctionImage, Category } from '../models/models.js';
+import { User, Auction, Bid, AuctionImage, Category } from '../models/models.js';
 
 // جلب إحصائيات المستخدم
 export const getUserStats = async (userId) => {
   try {
     const activeAuctionsCount = await Auction.count({
-      where: {
-        seller_id: userId,
-        status: 'active'
-      }
+      where: { seller_id: userId, status: 'active' }
     });
 
-    // حساب المزادات التي فاز بها المستخدم
-    const wonAuctionsCount = await Auction.count({
+    // حساب المزادات التي فاز بها المستخدم (أكثر دقة: تحقق من أعلى مزايدة)
+    const wonAuctions = await Auction.findAll({
+      where: { status: 'closed' },
       include: [{
         model: Bid,
         as: 'Bids',
         where: { bidder_id: userId },
         required: true
-      }],
-      where: {
-        status: 'closed'
-      }
+      }]
     });
 
-    const totalBidsCount = await Bid.count({
-      where: {
-        bidder_id: userId
+    let wonAuctionsCount = 0;
+    for (const auction of wonAuctions) {
+      const maxBid = await Bid.findOne({
+        where: { auction_id: auction.auction_id },
+        order: [['amount', 'DESC']]
+      });
+      if (maxBid && maxBid.bidder_id === userId) {
+        wonAuctionsCount++;
       }
-    });
+    }
+
+    const totalBidsCount = await Bid.count({ where: { bidder_id: userId } });
 
     return {
       active_auctions: activeAuctionsCount,
@@ -46,20 +48,9 @@ export const getUserAuctions = async (userId) => {
     const auctions = await Auction.findAll({
       where: { seller_id: userId },
       include: [
-        {
-          model: Bid,
-          as: 'Bids',
-          attributes: ['bid_id']
-        },
-        {
-          model: AuctionImage,
-          as: 'AuctionImages',
-          attributes: ['image_url']
-        },
-        {
-          model: Category,
-          attributes: ['name']
-        }
+        { model: Bid, as: 'Bids', attributes: ['bid_id'] },
+        { model: AuctionImage, as: 'AuctionImages', attributes: ['image_url'] },
+        { model: Category, attributes: ['name'] }
       ],
       order: [['created_at', 'DESC']]
     });
@@ -74,7 +65,9 @@ export const getUserAuctions = async (userId) => {
       end_time: auction.end_time,
       status: auction.status,
       created_at: auction.created_at,
-      image: auction.AuctionImages.length > 0 ? auction.AuctionImages[0].image_url : 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
+      image: auction.AuctionImages.length > 0
+        ? auction.AuctionImages[0].image_url
+        : 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
       bids_count: auction.Bids.length,
       time_left: calculateTimeLeft(auction.end_time)
     }));
@@ -93,13 +86,7 @@ export const getUserBids = async (userId) => {
         {
           model: Auction,
           as: 'Auction',
-          include: [
-            {
-              model: AuctionImage,
-              as: 'AuctionImages',
-              attributes: ['image_url']
-            }
-          ]
+          include: [{ model: AuctionImage, as: 'AuctionImages', attributes: ['image_url'] }]
         }
       ],
       order: [['bid_time', 'DESC']]
@@ -107,7 +94,6 @@ export const getUserBids = async (userId) => {
 
     const bidsWithStatus = await Promise.all(
       bids.map(async (bid) => {
-        // جلب أعلى مزايدة في المزاد
         const maxBid = await Bid.findOne({
           where: { auction_id: bid.Auction.auction_id },
           order: [['amount', 'DESC']]
@@ -122,9 +108,11 @@ export const getUserBids = async (userId) => {
           bid_id: bid.bid_id,
           my_bid: bid.amount,
           current_price: maxBid ? maxBid.amount : bid.amount,
-          status: status,
+          status,
           auction_title: bid.Auction.title,
-          auction_image: bid.Auction.AuctionImages.length > 0 ? bid.Auction.AuctionImages[0].image_url : 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
+          auction_image: bid.Auction.AuctionImages.length > 0
+            ? bid.Auction.AuctionImages[0].image_url
+            : 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
           time_left: calculateTimeLeft(bid.Auction.end_time)
         };
       })
@@ -160,7 +148,8 @@ export const getRecentActivity = async (userId) => {
         type: 'create',
         message: 'أنشأت مزاد جديد',
         details: auction.title,
-        time: formatTimeAgo(auction.created_at)
+        time: formatTimeAgo(auction.created_at),
+        timestamp: auction.created_at
       });
     });
 
@@ -169,11 +158,11 @@ export const getRecentActivity = async (userId) => {
         type: 'bid',
         message: 'قدمت مزايدة',
         details: `على ${bid.Auction.title} بقيمة ${bid.amount} ر.س`,
-        time: formatTimeAgo(bid.bid_time)
+        time: formatTimeAgo(bid.bid_time),
+        timestamp: bid.bid_time
       });
     });
 
-    // إضافة نشاطات الفوز (يمكن تطويرها أكثر)
     const wonAuctions = await Auction.findAll({
       include: [{
         model: Bid,
@@ -181,25 +170,31 @@ export const getRecentActivity = async (userId) => {
         where: { bidder_id: userId },
         required: true
       }],
-      where: {
-        status: 'closed'
-      },
+      where: { status: 'closed' },
       limit: 2,
       order: [['end_time', 'DESC']]
     });
 
-    wonAuctions.forEach(auction => {
-      activities.push({
-        type: 'win',
-        message: 'فزت بمزاد',
-        details: `${auction.title} بقيمة ${auction.current_price} ر.س`,
-        time: formatTimeAgo(auction.end_time)
+    for (const auction of wonAuctions) {
+      const maxBid = await Bid.findOne({
+        where: { auction_id: auction.auction_id },
+        order: [['amount', 'DESC']]
       });
-    });
 
-    // ترتيب النشاطات حسب الوقت
-    activities.sort((a, b) => new Date(b.time) - new Date(a.time));
-    
+      if (maxBid && maxBid.bidder_id === userId) {
+        activities.push({
+          type: 'win',
+          message: 'فزت بمزاد',
+          details: `${auction.title} بقيمة ${auction.current_price} ر.س`,
+          time: formatTimeAgo(auction.end_time),
+          timestamp: auction.end_time
+        });
+      }
+    }
+
+    // الترتيب الصحيح حسب التاريخ الفعلي
+    activities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
     return activities.slice(0, 5);
   } catch (error) {
     console.error('Error getting recent activity:', error);
@@ -234,10 +229,7 @@ function calculateTimeLeft(endTime) {
   const now = new Date();
   const end = new Date(endTime);
   const diff = end - now;
-
-  if (diff <= 0) {
-    return 'انتهى';
-  }
+  if (diff <= 0) return 'انتهى';
 
   const hours = Math.floor(diff / (1000 * 60 * 60));
   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
@@ -255,11 +247,8 @@ function formatTimeAgo(date) {
   const hours = Math.floor(diff / (1000 * 60 * 60));
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
-  if (minutes < 60) {
-    return `منذ ${minutes} دقيقة`;
-  } else if (hours < 24) {
-    return `منذ ${hours} ساعة`;
-  } else {
-    return `منذ ${days} يوم`;
-  }
+  if (minutes < 60) return `منذ ${minutes} دقيقة`;
+  else if (hours < 24) return `منذ ${hours} ساعة`;
+  else return `منذ ${days} يوم`;
 }
+// ======================== END ========================

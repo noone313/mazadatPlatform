@@ -3,8 +3,8 @@ import { getUserStats, getUserAuctions, getUserBids, getRecentActivity } from '.
 
 export async function renderHomePage(req, res) {
   try {
-   
-    res.render('home');
+    const user = req.user || null;
+    res.render('home',{user});
     } catch (error) {
     console.error("Error rendering home page:", error);
     res.status(500).send("Internal Server Error");
@@ -15,7 +15,8 @@ export async function renderHomePage(req, res) {
 
 export async function renderRegisterPage(req, res) {
   try {
-    res.render('register');
+      const user = req.user || null;
+    res.render('register',{user});
   } catch (error) {
     console.error("Error rendering register page:", error);
     res.status(500).send("Internal Server Error");
@@ -26,8 +27,9 @@ export async function renderRegisterPage(req, res) {
 
 export async function renderLoginPage(req, res) {
   try {
+    const user = req.user || null;
     const {success,error} = req.query;
-    res.render('login', {success,error});
+    res.render('login', {success,error,user});
   } catch (error) {
     console.error("Error rendering login page:", error);
     res.status(500).send("Internal Server Error");
@@ -38,7 +40,8 @@ export async function renderLoginPage(req, res) {
 
 export async function renderContactUsPage(req,res) {
   try {
-    res.render('contactUS');
+     const user = req.user || null;
+    res.render('contactUS',{user});
     } catch (error) {
     console.error("Error rendering contact us page:", error);
     res.status(500).send("Internal Server Error");
@@ -47,7 +50,8 @@ export async function renderContactUsPage(req,res) {
 
 export async function renderHowToJoin(req,res) {
   try{
-    res.render('howToJoin');
+     const user = req.user || null;
+    res.render('howToJoin',{user});
   } catch (error) {
     console.error("Error rendering how to join page:", error);
     res.status(500).send("Internal Server Error");
@@ -59,7 +63,8 @@ export async function renderHowToJoin(req,res) {
 
 export async function renderCreateAuctionPage(req,res) {
   try {
-    res.render('createAuction');
+     const user = req.user || null;
+    res.render('createAuction',{user});
     } catch (error) {
     console.error("Error rendering create auction page:", error);
     res.status(500).send("Internal Server Error");
@@ -72,20 +77,21 @@ export async function renderCreateAuctionPage(req,res) {
 export async function renderProfilePage(req, res) {
   try {
     const user = req.user;
-    
-    // جلب البيانات الحقيقية من قاعدة البيانات
-    const userStats = await getUserStats(user.id);
-    const userAuctions = await getUserAuctions(user.id);
-    const userBids = await getUserBids(user.id);
-    const recentActivity = await getRecentActivity(user.id);
 
-    res.render('profile', { 
+    const [stats, auctions, bids, activity] = await Promise.all([
+      getUserStats(user.id),
+      getUserAuctions(user.id),
+      getUserBids(user.id),
+      getRecentActivity(user.id)
+    ]);
+
+    return res.render("profile", {
       user: {
         ...user,
-        stats: userStats,
-        auctions: userAuctions,
-        bids: userBids,
-        recent_activity: recentActivity
+        stats,
+        auctions,
+        bids,
+        recent_activity: activity
       }
     });
   } catch (error) {

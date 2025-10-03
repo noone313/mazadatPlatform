@@ -12,7 +12,7 @@ const categoryRouter = Router();
 
 // كل العمليات محمية بواسطة JWT
 categoryRouter.post("/categories", authenticateToken, createCategory);
-categoryRouter.get("/categories", getAllCategories);
+categoryRouter.get("/categories",authenticateToken, getAllCategories);
 categoryRouter.put("/categories/:id", authenticateToken, updateCategory);
 categoryRouter.delete("/categories/:id", authenticateToken, deleteCategory);
 

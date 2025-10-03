@@ -36,11 +36,13 @@ export async function createCategory(req, res) {
 // عرض جميع الفئات
 export async function getAllCategories(req, res) {
   try {
+     const user = req.user || null;
     const categories = await Category.findAll();
 
     return res.status(200).render("categories", {
       success: true,
-      categories
+      categories,
+      user
     });
 
   } catch (error) {

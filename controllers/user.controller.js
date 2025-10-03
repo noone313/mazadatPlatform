@@ -154,9 +154,9 @@ export async function login(req, res) {
 export async function update_my_account(req, res) {
   try {
     // التأكد من تسجيل الدخول
-    const userId = req.user?.id;
+    const userId = req.user.id;
     if (!userId) {
-      return res.status(401).render('error',{
+      return res.status(401).render('error', {
         success: false,
         message: "غير مصرح لك"
       });
@@ -168,7 +168,7 @@ export async function update_my_account(req, res) {
     // البحث عن المستخدم
     const user = await User.findOne({ where: { user_id: userId } });
     if (!user) {
-      return res.status(404).render('error',{
+      return res.status(404).render('error', {
         success: false,
         message: "المستخدم غير موجود"
       });
@@ -187,6 +187,26 @@ export async function update_my_account(req, res) {
     }
 
     await user.save();
+
+     // توليد توكن جديد بعد التحديث
+    const token = jwt.sign(
+      {
+        id: user.user_id,
+        full_name: user.full_name,
+        email: user.email,
+        phone: user.phone,
+        address: user.address,
+        role: user.role
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '30d' }
+    );
+
+    // حفظ التوكن الجديد في الكوكيز
+    res.cookie('token', token, {
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000 // 1 يوم
+    });
 
     return res.status(200).json({
       success: true,
@@ -209,6 +229,7 @@ export async function update_my_account(req, res) {
     });
   }
 }
+
 
 
 export async function delete_my_account(req, res) {

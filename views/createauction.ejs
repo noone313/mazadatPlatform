@@ -171,8 +171,7 @@
 </head>
 <body class="gradient-bg">
     <!-- شريط التنقل -->
-    <%- include('partials/navbar') %>
-
+    <%- include('partials/navbar', {user: user}) %>
     <!-- محتوى صفحة إنشاء مزاد -->
     <main class="max-w-4xl mx-auto px-4 py-8">
         <div class="form-container p-8">
@@ -227,6 +226,7 @@
                                     class="appearance-none rounded-lg relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 bg-white">
                                 <option value="" disabled selected>اختر الفئة</option>
                                 <option value="cars">سيارات</option>
+                                <option value="kitchen">مطبخ</option>
                                 <option value="realestate">عقارات</option>
                                 <option value="electronics">إلكترونيات</option>
                                 <option value="jewelry">مجوهرات</option>
@@ -284,12 +284,7 @@
                     <h2 class="text-2xl font-bold text-gray-800 mb-6">توقيت المزاد</h2>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="input-group datetime-input">
-                            <i class="fas fa-play-circle"></i>
-                            <input id="start_time" name="start_time" type="datetime-local" required 
-                                   class="appearance-none rounded-lg relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10">
-                        </div>
-
+                        <!-- تم إزالة حقل start_time لتتوافق مع السيرفر -->
                         <div class="input-group datetime-input">
                             <i class="fas fa-stop-circle"></i>
                             <input id="end_time" name="end_time" type="datetime-local" required 
@@ -345,7 +340,7 @@
                                 <p id="preview-price" class="text-gray-900 mb-4">-</p>
                                 
                                 <h4 class="font-medium text-gray-700 mb-2">وقت البدء:</h4>
-                                <p id="preview-start" class="text-gray-900 mb-4">-</p>
+                                <p id="preview-start" class="text-gray-900 mb-4">يبدأ فوراً</p>
                                 
                                 <h4 class="font-medium text-gray-700 mb-2">وقت الانتهاء:</h4>
                                 <p id="preview-end" class="text-gray-900">-</p>
@@ -384,7 +379,7 @@
     </main>
 
     <!-- تذييل الصفحة -->
-    <%- include('partials/footer') %>
+    <%- include('partials/footer') %> 
 
     <script>
         // متغيرات لتخزين البيانات
@@ -471,25 +466,18 @@
                     return true;
                     
                 case 3:
-                    const startTime = document.getElementById('start_time').value;
                     const endTime = document.getElementById('end_time').value;
                     
-                    if (!startTime || !endTime) {
-                        alert('يرجى تحديد وقت البدء والانتهاء للمزاد');
+                    if (!endTime) {
+                        alert('يرجى تحديد وقت الانتهاء للمزاد');
                         return false;
                     }
                     
-                    const startDate = new Date(startTime);
                     const endDate = new Date(endTime);
                     const now = new Date();
                     
-                    if (startDate <= now) {
-                        alert('وقت البدء يجب أن يكون في المستقبل');
-                        return false;
-                    }
-                    
-                    if (endDate <= startDate) {
-                        alert('وقت الانتهاء يجب أن يكون بعد وقت البدء');
+                    if (endDate <= now) {
+                        alert('وقت الانتهاء يجب أن يكون في المستقبل');
                         return false;
                     }
                     
@@ -507,12 +495,7 @@
             document.getElementById('preview-category').textContent = document.getElementById('category').options[document.getElementById('category').selectedIndex].text;
             document.getElementById('preview-price').textContent = document.getElementById('start_price').value + ' ر.س';
             
-            const startTime = document.getElementById('start_time').value;
             const endTime = document.getElementById('end_time').value;
-            
-            if (startTime) {
-                document.getElementById('preview-start').textContent = new Date(startTime).toLocaleString('ar-SA');
-            }
             
             if (endTime) {
                 document.getElementById('preview-end').textContent = new Date(endTime).toLocaleString('ar-SA');
@@ -602,24 +585,72 @@
             });
         }
 
-        // إرسال النموذج
-        form.addEventListener('submit', (e) => {
+        // إرسال النموذج - الإصدار المعدل
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
             if (validateStep(4)) {
-                // هنا يمكنك إضافة كود لإرسال البيانات إلى الخادم
-                // alert('تم إنشاء المزاد بنجاح! سيتم مراجعته ونشره قريباً.');
-                form.submit(); // إلغاء التعليق عند ربطها بالخادم
+                const submitBtn = e.target.querySelector('button[type="submit"]');
+                const originalText = submitBtn.innerHTML;
+                
+                // عرض تحميل
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin ml-2"></i> جاري الإنشاء...';
+                submitBtn.disabled = true;
+                
+                try {
+                    // استخدام FormData جديد
+                    const formData = new FormData();
+                    
+                    // الحقول النصية
+                    formData.append('title', document.getElementById('title').value);
+                    formData.append('description', document.getElementById('description').value);
+                    formData.append('start_price', document.getElementById('start_price').value);
+                    formData.append('end_time', document.getElementById('end_time').value);
+                    formData.append('categoryName', document.getElementById('category').value);
+                    
+                    // الصور - ⚠️ مهم: استخدم image.file
+                    uploadedImages.forEach((image) => {
+                        formData.append('image', image.file);
+                    });
+                    
+                    // الحصول على التوكن
+                    const token = localStorage.getItem('token') || 'demo-token'; // استبدل هذا بالطريقة الصحيحة للحصول على التوكن
+                    
+                    // الإرسال
+                    const response = await fetch('/auctions', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                            // ⚠️ لا تضف 'Content-Type' - سيضيفها المتصفح تلقائياً لـ FormData
+                        },
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        alert('✅ تم إنشاء المزاد بنجاح!');
+                        window.location.href = '/auctions';
+                    } else {
+                        alert('❌ خطأ: ' + result.message);
+                    }
+                    
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('❌ حدث خطأ أثناء إنشاء المزاد');
+                } finally {
+                    // إعادة تعيين الزر
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                }
             }
         });
 
         // تعيين القيم الافتراضية للتواريخ
         document.addEventListener('DOMContentLoaded', () => {
             const now = new Date();
-            const startTime = new Date(now.getTime() + 60 * 60 * 1000); // بعد ساعة من الآن
-            const endTime = new Date(startTime.getTime() + 7 * 24 * 60 * 60 * 1000); // بعد 7 أيام من وقت البدء
+            const endTime = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // بعد 7 أيام من الآن
             
-            document.getElementById('start_time').value = formatDateTime(startTime);
             document.getElementById('end_time').value = formatDateTime(endTime);
         });
 

@@ -164,16 +164,21 @@
             <div class="profile-header">
                 <div class="text-center">
                     <div class="avatar-container">
-                        <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" alt="صورة المستخدم" class="w-full h-full object-cover">
+                       <img src="https://images.unsplash.com/vector-1755861687023-47fe5ef04d56?q=80&w=880&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" 
+     alt="صورة المستخدم" 
+     class="w-full h-full object-cover rounded-full">
+
+
                     </div>
                     <h1 class="text-2xl font-bold mb-2" id="user-name"><%= user.full_name %></h1>
 
-                    <div class="flex items-center justify-center space-x-4">
-                        <span class="badge <%= user.role === 'buyer' ? 'buyer' : user.role === 'seller' ? 'seller' : 'admin' %>" id="user-role">
-                            <%= user.role === 'buyer' ? 'مشتري' : user.role === 'seller' ? 'بائع' : 'مدير' %>
-                        </span>
-                        <span class="text-blue-100">عضو منذ <span id="member-since"><%= new Date(user.created_at || Date.now()).getFullYear() %></span></span>
-                    </div>
+                   <div class="flex items-center justify-center gap-3">
+    <span class="badge <%= user.role === 'buyer' ? 'buyer' : user.role === 'seller' ? 'seller' : 'admin' %>" id="user-role">
+        <%= user.role === 'buyer' ? 'مشتري' : user.role === 'seller' ? 'بائع' : 'مدير' %>
+    </span>
+    <span class="text-blue-100">عضو منذ <span id="member-since"><%= new Date(user.created_at || Date.now()).getFullYear() %></span></span>
+</div>
+
                 </div>
             </div>
 
@@ -229,7 +234,7 @@
                             <!-- معلومات المستخدم -->
                             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                                 <h2 class="text-xl font-bold text-gray-800 mb-4">معلوماتي الشخصية</h2>
-                                <div class="space-y-4">
+                                <div class="space-y-5">
                                     <div class="info-item">
                                         <div class="info-icon bg-blue-100 text-blue-600">
                                             <i class="fas fa-user"></i>
@@ -500,7 +505,7 @@
 
                                 <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                                     <h4 class="font-medium text-yellow-800 mb-2">تغيير كلمة المرور</h4>
-                                    <p class="text-yellow-700 text-sm mb-3">يوصى بتغيير كلمة المرور定期 كل 3 أشهر</p>
+                                    <p class="text-yellow-700 text-sm mb-3">يوصى بتغيير كلمة المرور كل 3 أشهر</p>
                                     <button class="bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2 px-4 rounded-lg transition duration-300">
                                         تغيير كلمة المرور
                                     </button>
@@ -597,24 +602,19 @@
             };
 
             // هنا يمكن إضافة كود لإرسال البيانات إلى الخادم
-            fetch('/api/profile/update', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formData)
-            })
-            .then(response => response.json())
+            fetch('/users/me', {
+    method: 'PUT',
+    headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem("token")}` // لو تستعمل JWT
+    },
+    body: JSON.stringify(formData)
+}).then(response => response.json())
             .then(data => {
                 if (data.success) {
                     alert('تم حفظ التغييرات بنجاح');
-                    // تحديث البيانات المعروضة
-                    document.getElementById('user-name').textContent = formData.full_name;
-                    document.getElementById('info-fullname').textContent = formData.full_name;
-                    document.getElementById('info-email').textContent = formData.email;
-                    document.getElementById('info-phone').textContent = formData.phone || 'لم يتم إضافة رقم هاتف';
-                    document.getElementById('info-address').textContent = formData.address || 'لم يتم إضافة عنوان';
-                } else {
+                    location.reload();
+                    } else {
                     alert('حدث خطأ أثناء حفظ التغييرات');
                 }
             })

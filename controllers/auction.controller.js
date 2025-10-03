@@ -6,60 +6,42 @@ import { scheduleAuction } from "../utils/closeAuctions.js";
 
 export async function createAuction(req, res) {
   try {
+    console.log('🎯 createAuction function started');
+    console.log('📦 Request body:', req.body);
+    console.log('📁 Uploaded file:', req.file);
+
+    // التحقق من الصورة
+    if (!req.file) {
+      console.log('❌ No file uploaded');
+      return res.status(400).json({
+        success: false,
+        message: "الصورة مطلوبة للمزاد"
+      });
+    }
+
     const { title, description, start_price, end_time, categoryName } = req.body;
 
-    // التحقق من القيم المطلوبة
-    const check = test_request_values(title, description, start_price, end_time, categoryName);
-    if (!check.success) {
-      return res.status(400).render("error", {
+    // باقي التحقق من الحقول
+    if (!title || !description || !start_price || !end_time || !categoryName) {
+      // حذف الصورة إذا تم رفعها وفشل التحقق
+      if (req.file) {
+        fs.unlinkSync(req.file.path);
+      }
+      return res.status(400).json({
         success: false,
-        message: "جميع الحقول مطلوبة",
-        missingFields: check.errors || []
+        message: "جميع الحقول مطلوبة"
       });
     }
 
+    // باقي الكود...
     const category = await Category.findOne({ where: { name: categoryName } });
     if (!category) {
-      return res.status(404).render("error", {
+      if (req.file) {
+        fs.unlinkSync(req.file.path);
+      }
+      return res.status(404).json({
         success: false,
-        message: `الفئة "${categoryName}" غير موجودة`,
-        missingFields: []
-      });
-    }
-
-    // التأكد من أن المستخدم بائع
-    if (req.user.role !== "seller") {
-      return res.status(403).render("error", {
-        success: false,
-        message: "غير مسموح لك بإنشاء مزاد، يجب أن تكون بائع",
-        missingFields: []
-      });
-    }
-
-    // التحقق من الوقت النهائي للمزاد
-    if (new Date(end_time) <= new Date()) {
-      return res.status(400).render("error", {
-        success: false,
-        message: "وقت الانتهاء يجب أن يكون مستقبلي",
-        missingFields: []
-      });
-    }
-
-    // التحقق من السعر الابتدائي
-    if (start_price <= 0) {
-      return res.status(400).render("error", {
-        success: false,
-        message: "السعر الابتدائي يجب أن يكون أكبر من صفر",
-        missingFields: []
-      });
-    }
-
-    // التأكد من وجود صورة واحدة
-    if (!req.file) {
-      return res.status(400).render("error", {
-        success: false,
-        message: "الصورة مطلوبة",
-        missingFields: []
+        message: `الفئة "${categoryName}" غير موجودة`
       });
     }
 
@@ -76,30 +58,34 @@ export async function createAuction(req, res) {
       category_id: category.category_id
     });
 
-    // حفظ الصورة في جدول AuctionImage
+    // حفظ الصورة
     const auctionImage = await AuctionImage.create({
       image_url: req.file.path,
       auction_id: auction.auction_id
     });
 
-    // جلب المزاد مع الصورة لإرسال الاستجابة
-    const createdAuction = await Auction.findByPk(auction.auction_id, { include: AuctionImage });
+    const createdAuction = await Auction.findByPk(auction.auction_id, { 
+      include: AuctionImage 
+    });
 
-    // جدولة المزاد (إذا لديك وظيفة scheduleAuction)
     scheduleAuction(auction);
 
-    return res.status(201).render("success", {
+    return res.status(201).json({
       success: true,
       message: "تم إنشاء المزاد بنجاح",
       data: createdAuction
     });
 
   } catch (error) {
-    console.error(error);
-    return res.status(500).render("error", {
+    // حذف الصورة إذا كانت موجودة
+    if (req.file && req.file.path) {
+      fs.unlinkSync(req.file.path);
+    }
+    
+    console.error("Error creating auction:", error);
+    return res.status(500).json({
       success: false,
       message: "حدث خطأ في السيرفر",
-      missingFields: [],
       error: error.message
     });
   }
@@ -110,6 +96,7 @@ export async function createAuction(req, res) {
 
 export async function getAuction(req, res) {
   try {
+    const user = req.user || null;
     const { id } = req.params;
 
     // البحث عن المزاد مع الصور والمزايدات والفئة والبائع
@@ -153,7 +140,8 @@ export async function getAuction(req, res) {
 
     return res.status(200).render("auctiondetails", {
       success: true,
-      auction
+      auction,
+      user
     });
 
   } catch (error) {
@@ -266,6 +254,7 @@ export async function updateAuction(req, res) {
 
 export async function getAllAuctions(req, res) {
   try {
+    const user = req.user || null;
     // باراميترات البيجنيشن
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
@@ -285,19 +274,51 @@ export async function getAllAuctions(req, res) {
           model: User,
           as: "Seller",
           attributes: ["user_id", "full_name", "email"]
+        },
+        {
+          model: Bid,
+          attributes: ["bid_id"],
+          separate: true // لجلب عدد المزايدات
         }
       ],
+      where: {
+        status: 'active' // فقط المزادات النشطة
+      },
       order: [["created_at", "DESC"]],
       limit,
       offset
     });
+
+    // جلب الإحصائيات الحقيقية
+    const totalActiveAuctions = await Auction.count({ where: { status: 'active' } });
+    const totalUsers = await User.count();
+    const totalEndedAuctions = await Auction.count({ where: { status: 'closed' } });
+    
+    // حساب قيمة المبيعات (مجموع أسعار المزادات المنتهية)
+    const totalSales = await Auction.sum('current_price', { 
+      where: { status: 'closed' } 
+    }) || 0;
 
     return res.status(200).render("auctions", {
       success: true,
       page,
       totalPages: Math.ceil(count / limit),
       totalAuctions: count,
-      auctions
+      auctions: auctions.map(auction => ({
+        ...auction.toJSON(),
+        bids_count: auction.Bids ? auction.Bids.length : 0,
+        main_image: auction.AuctionImages && auction.AuctionImages.length > 0 
+          ? auction.AuctionImages[0].image_url 
+          : 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
+        time_left: calculateTimeLeft(auction.end_time)
+      })),
+      user,
+      stats: {
+        activeAuctions: totalActiveAuctions,
+        totalUsers: totalUsers,
+        endedAuctions: totalEndedAuctions,
+        totalSales: totalSales
+      }
     });
 
   } catch (error) {
@@ -311,58 +332,19 @@ export async function getAllAuctions(req, res) {
   }
 }
 
+// دالة مساعدة لحساب الوقت المتبقي
+function calculateTimeLeft(endTime) {
+  const now = new Date();
+  const end = new Date(endTime);
+  const diff = end - now;
 
-export async function getAllAuctionsWithFilter(req, res) {
-  try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const offset = (page - 1) * limit;
-
-    // الفلاتر
-    const { category_id, status } = req.query;
-    const where = {};
-    if (category_id) where.category_id = category_id;
-    if (status) where.status = status; // "active", "closed", "cancelled"
-
-    const { count, rows: auctions } = await Auction.findAndCountAll({
-      where,
-      include: [
-        {
-          model: AuctionImage,
-          attributes: ["image_id", "image_url"]
-        },
-        {
-          model: Category,
-          attributes: ["category_id", "name", "description"]
-        },
-        {
-          model: User,
-          as: "Seller",
-          attributes: ["user_id", "full_name", "email"]
-        }
-      ],
-      order: [["created_at", "DESC"]],
-      limit,
-      offset
-    });
-
-    return res.status(200).render("auctions", {
-      success: true,
-      page,
-      totalPages: Math.ceil(count / limit),
-      totalAuctions: count,
-      auctions,
-      filters: { category_id, status }
-    });
-
-  } catch (error) {
-    console.error(error);
-    return res.status(500).render("error", {
-      success: false,
-      message: "حدث خطأ في السيرفر",
-      missingFields: [],
-      error: error.message
-    });
+  if (diff <= 0) {
+    return '00:00:00';
   }
-}
 
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}

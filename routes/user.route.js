@@ -11,6 +11,6 @@ userRouter.post('/users/login',login);
 
 userRouter.delete('/users/:id',authenticateToken,delete_my_account);
 
-userRouter.put("/users/:id", authenticateToken, update_my_account);
+userRouter.put("/users/me", authenticateToken, update_my_account);
 
 export { userRouter };

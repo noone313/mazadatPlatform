@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>المزاد الحي - منصة مزادات</title>
+    <title><%= auction.title %> - منصة مزادات</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="/socket.io/socket.io.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -113,6 +113,12 @@
             background: #fecaca;
             color: #dc2626;
         }
+        .auction-ended {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+        }
+        .auction-active {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -123,16 +129,21 @@
     <main class="max-w-7xl mx-auto px-4 py-8">
         <div class="auction-container overflow-hidden">
             <!-- رأس المزاد -->
-            <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6">
+            <div class="<%= auction.status === 'active' ? 'auction-active' : 'auction-ended' %> text-white p-6">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
                     <div>
-                        <h1 class="text-2xl font-bold mb-2" id="auctionTitle">سيارة تويوتا كامري 2022</h1>
-                        <p class="text-blue-100">رقم المزاد: <span id="auctionId">#12345</span></p>
+                        <h1 class="text-2xl font-bold mb-2" id="auctionTitle"><%= auction.title %></h1>
+                        <p class="text-blue-100">رقم المزاد: <span id="auctionId">#<%= auction.auction_id %></span></p>
+                        <div class="mt-2">
+                            <span class="socket-status connected" id="socketStatus">
+                                <i class="fas fa-circle mr-1" style="font-size: 8px;"></i> متصل
+                            </span>
+                        </div>
                     </div>
                     <div class="mt-4 md:mt-0">
                         <div class="countdown-timer">
                             <i class="far fa-clock mr-2"></i>
-                            <span id="countdown">02:15:33</span>
+                            <span id="countdown"><%= auction.status === 'active' ? 'جاري العد التنازلي...' : 'انتهى المزاد' %></span>
                         </div>
                     </div>
                 </div>
@@ -144,24 +155,29 @@
                     <div class="lg:col-span-2">
                         <!-- الصورة الرئيسية -->
                         <div class="bg-gray-100 rounded-xl overflow-hidden mb-4">
-                            <img id="mainImage" src="https://images.unsplash.com/photo-1549399542-7e3f8b79c341?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" 
-                                 alt="صورة المنتج" class="w-full h-80 object-cover">
+                            <img id="mainImage" 
+                                 src="<%= auction.AuctionImages && auction.AuctionImages.length > 0 ? auction.AuctionImages[0].image_url : '/images/placeholder.jpg' %>" 
+                                 alt="<%= auction.title %>" 
+                                 class="w-full h-80 object-cover">
                         </div>
 
                         <!-- معرض الصور -->
+                        <% if (auction.AuctionImages && auction.AuctionImages.length > 1) { %>
                         <div class="image-gallery" id="imageGallery">
-                            <!-- سيتم ملء الصور عبر JavaScript -->
+                            <% auction.AuctionImages.forEach((image, index) => { %>
+                                <div class="gallery-thumb <%= index === 0 ? 'active' : '' %>">
+                                    <img src="<%= image.image_url %>" alt="صورة <%= index + 1 %>">
+                                </div>
+                            <% }); %>
                         </div>
+                        <% } %>
 
                         <!-- وصف المزاد -->
                         <div class="mt-8">
                             <h2 class="text-xl font-bold text-gray-800 mb-4">وصف المزاد</h2>
                             <div class="bg-gray-50 rounded-lg p-4">
                                 <p id="auctionDescription" class="text-gray-700 leading-relaxed">
-                                    سيارة تويوتا كامري 2022 بحالة ممتازة، مسافة 15,000 كم فقط. 
-                                    اللون أبيض لؤلؤي، فل كامل، صيانة دورية في الوكالة. 
-                                    لا يوجد أي حوادث، طلاء أصلي 100%. 
-                                    السيارة تحت الضمان حتى 2025.
+                                    <%= auction.description %>
                                 </p>
                             </div>
                         </div>
@@ -175,25 +191,29 @@
                                         <i class="fas fa-user text-blue-600"></i>
                                     </div>
                                     <div>
-                                        <p class="font-medium" id="sellerName">أحمد محمد</p>
-                                        <p class="text-gray-600 text-sm">تقييم: 4.8 ★</p>
+                                        <p class="font-medium" id="sellerName"><%= auction.Seller.full_name %></p>
+                                        <p class="text-gray-600 text-sm">البريد الإلكتروني: <%= auction.Seller.email %></p>
                                     </div>
                                 </div>
                             </div>
                             <div class="bid-card p-4">
-                                <h3 class="font-bold text-gray-800 mb-2">شروط المزاد</h3>
+                                <h3 class="font-bold text-gray-800 mb-2">معلومات المزاد</h3>
                                 <ul class="text-gray-700 text-sm space-y-1">
                                     <li class="flex items-center">
-                                        <i class="fas fa-check text-green-500 ml-2"></i>
+                                        <i class="fas fa-tag text-blue-500 ml-2"></i>
+                                        الفئة: <%= auction.Category.name %>
+                                    </li>
+                                    <li class="flex items-center">
+                                        <i class="fas fa-play-circle text-green-500 ml-2"></i>
+                                        بدأ: <%= new Date(auction.start_time).toLocaleString('ar-SA') %>
+                                    </li>
+                                    <li class="flex items-center">
+                                        <i class="fas fa-stop-circle text-red-500 ml-2"></i>
+                                        ينتهي: <%= new Date(auction.end_time).toLocaleString('ar-SA') %>
+                                    </li>
+                                    <li class="flex items-center">
+                                        <i class="fas fa-arrow-up text-yellow-500 ml-2"></i>
                                         الحد الأدنى للزيادة: 500 ر.س
-                                    </li>
-                                    <li class="flex items-center">
-                                        <i class="fas fa-check text-green-500 ml-2"></i>
-                                        الضمان: 3 أشهر
-                                    </li>
-                                    <li class="flex items-center">
-                                        <i class="fas fa-check text-green-500 ml-2"></i>
-                                        التوصيل: متاح لجميع المدن
                                     </li>
                                 </ul>
                             </div>
@@ -205,63 +225,90 @@
                         <!-- السعر الحالي -->
                         <div class="text-center mb-6">
                             <p class="text-gray-600 mb-2">السعر الحالي</p>
-                            <div class="current-price" id="currentPrice">85,000 ر.س</div>
+                            <div class="current-price" id="currentPrice">
+                                <%= new Intl.NumberFormat('ar-SA').format(auction.current_price) %> ر.س
+                            </div>
                             <p class="text-gray-500 text-sm mt-2">أعلى مزايدة حالياً</p>
                         </div>
 
                         <!-- نموذج المزايدة -->
-                        <div class="bid-form mb-6">
-                            <h3 class="font-bold text-gray-800 mb-4">المزايدة الآن</h3>
-                            
-                            <div id="bidForm" class="space-y-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">مبلغ المزايدة</label>
-                                    <div class="relative">
-                                        <input type="number" id="bidAmount" 
-                                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                               placeholder="أدخل المبلغ">
-                                        <span class="absolute left-3 top-3 text-gray-500">ر.س</span>
+                        <% if (auction.status === 'active') { %>
+                            <div class="bid-form mb-6">
+                                <h3 class="font-bold text-gray-800 mb-4">المزايدة الآن</h3>
+                                
+                                <% if (user) { %>
+                                    <div id="bidForm" class="space-y-4">
+                                        <input type="hidden" id="auctionId" value="<%= auction.auction_id %>">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">مبلغ المزايدة</label>
+                                            <div class="relative">
+                                                <input type="number" id="bidAmount" 
+                                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                       placeholder="أدخل المبلغ"
+                                                       min="<%= auction.current_price + 500 %>"
+                                                       step="500">
+                                                <span class="absolute left-3 top-3 text-gray-500">ر.س</span>
+                                            </div>
+                                            <p class="text-sm text-gray-500 mt-1">
+                                                الحد الأدنى: <span id="minBid"><%= new Intl.NumberFormat('ar-SA').format(auction.current_price + 500) %></span> ر.س
+                                            </p>
+                                        </div>
+                                        
+                                        <button id="submitBid" 
+                                                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                                            تقديم المزايدة
+                                        </button>
+                                        
+                                        <p class="text-xs text-gray-500 text-center">
+                                            بالضغط على "تقديم المزايدة"، أنت توافق على <a href="/terms" class="text-blue-600 hover:underline">شروط الاستخدام</a>
+                                        </p>
                                     </div>
-                                    <p class="text-sm text-gray-500 mt-1">الحد الأدنى: <span id="minBid">85,500</span> ر.س</p>
+                                <% } else { %>
+                                    <div id="loginRequired" class="text-center py-4">
+                                        <p class="text-gray-600 mb-3">يجب تسجيل الدخول للمشاركة في المزايدة</p>
+                                        <a href="/login" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition duration-300">
+                                            تسجيل الدخول
+                                        </a>
+                                    </div>
+                                <% } %>
+                            </div>
+                        <% } else { %>
+                            <div class="bid-form mb-6">
+                                <h3 class="font-bold text-gray-800 mb-4">حالة المزاد</h3>
+                                <div class="text-center py-4">
+                                    <i class="fas fa-ban text-3xl text-gray-400 mb-3"></i>
+                                    <p class="text-gray-600">انتهى هذا المزاد</p>
                                 </div>
-                                
-                                <button id="submitBid" 
-                                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
-                                    تقديم المزايدة
-                                </button>
-                                
-                                <p class="text-xs text-gray-500 text-center">
-                                    بالضغط على "تقديم المزايدة"، أنت توافق على <a href="#" class="text-blue-600 hover:underline">شروط الاستخدام</a>
-                                </p>
                             </div>
-
-                            <div id="loginRequired" class="text-center py-4 hidden">
-                                <p class="text-gray-600 mb-3">يجب تسجيل الدخول للمشاركة في المزايدة</p>
-                                <a href="login.html" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition duration-300">
-                                    تسجيل الدخول
-                                </a>
-                            </div>
-                        </div>
+                        <% } %>
 
                         <!-- إحصائيات سريعة -->
                         <div class="bid-card p-4 mb-6">
                             <h3 class="font-bold text-gray-800 mb-3">إحصائيات المزاد</h3>
                             <div class="grid grid-cols-2 gap-4">
                                 <div class="text-center">
-                                    <p class="text-2xl font-bold text-blue-600" id="bidsCount">24</p>
+                                    <p class="text-2xl font-bold text-blue-600" id="bidsCount">
+                                        <%= auction.Bids ? auction.Bids.length : 0 %>
+                                    </p>
                                     <p class="text-gray-600 text-sm">عدد المزايدات</p>
                                 </div>
                                 <div class="text-center">
-                                    <p class="text-2xl font-bold text-green-600" id="biddersCount">15</p>
+                                    <p class="text-2xl font-bold text-green-600" id="biddersCount">
+                                        <%= auction.biddersCount || 0 %>
+                                    </p>
                                     <p class="text-gray-600 text-sm">عدد المزايدين</p>
                                 </div>
                                 <div class="text-center">
-                                    <p class="text-2xl font-bold text-purple-600" id="viewsCount">1,245</p>
+                                    <p class="text-2xl font-bold text-purple-600" id="viewsCount">
+                                        <%= auction.views || 0 %>
+                                    </p>
                                     <p class="text-gray-600 text-sm">عدد المشاهدات</p>
                                 </div>
                                 <div class="text-center">
-                                    <p class="text-2xl font-bold text-yellow-600">3</p>
-                                    <p class="text-gray-600 text-sm">أيام متبقية</p>
+                                    <p class="text-2xl font-bold <%= auction.status === 'active' ? 'text-yellow-600' : 'text-red-600' %>">
+                                        <%= auction.status === 'active' ? 'نشط' : 'منتهي' %>
+                                    </p>
+                                    <p class="text-gray-600 text-sm">الحالة</p>
                                 </div>
                             </div>
                         </div>
@@ -270,7 +317,25 @@
                         <div class="bid-card p-4">
                             <h3 class="font-bold text-gray-800 mb-3">آخر المزايدات</h3>
                             <div class="bid-history" id="bidHistory">
-                                <!-- سيتم ملء تاريخ المزايدات عبر JavaScript -->
+                                <% if (auction.Bids && auction.Bids.length > 0) { %>
+                                    <% auction.Bids.forEach((bid, index) => { %>
+                                        <div class="bid-item <%= index === 0 ? 'new-bid-indicator' : '' %>" id="bid-<%= bid.bid_id %>">
+                                            <div>
+                                                <p class="font-medium"><%= bid.Bidder.full_name %></p>
+                                                <p class="text-gray-500 text-sm">
+                                                    <%= new Date(bid.bid_time || bid.createdAt).toLocaleTimeString('ar-SA') %>
+                                                </p>
+                                            </div>
+                                            <div class="text-left">
+                                                <p class="font-bold text-blue-600">
+                                                    <%= new Intl.NumberFormat('ar-SA').format(bid.amount) %> ر.س
+                                                </p>
+                                            </div>
+                                        </div>
+                                    <% }); %>
+                                <% } else { %>
+                                    <p class="text-gray-500 text-center py-4">لا توجد مزايدات حتى الآن</p>
+                                <% } %>
                             </div>
                         </div>
                     </div>
@@ -283,36 +348,34 @@
     <%- include('partials/footer') %>
 
     <script>
-        // بيانات المزاد (يمكن جلبها من الخادم)
-        const auctionData = {
-            id: 12345,
-            title: "سيارة تويوتا كامري 2022",
-            description: "سيارة تويوتا كامري 2022 بحالة ممتازة، مسافة 15,000 كم فقط. اللون أبيض لؤلؤي، فل كامل، صيانة دورية في الوكالة. لا يوجد أي حوادث، طلاء أصلي 100%. السيارة تحت الضمان حتى 2025.",
-            startPrice: 80000,
-            currentPrice: 85000,
-            endTime: "2023-12-31T23:59:59",
-            seller: {
-                name: "أحمد محمد",
-                rating: 4.8
-            },
-            images: [
-                "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
-                "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
-                "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
-            ],
-            minBidIncrement: 500,
-            bids: [
-                { id: 1, user: "محمد أحمد", amount: 85000, time: "2023-12-25T14:30:00" },
-                { id: 2, user: "سارة خالد", amount: 84500, time: "2023-12-25T14:25:00" },
-                { id: 3, user: "فهد علي", amount: 84000, time: "2023-12-25T14:20:00" },
-                { id: 4, user: "نورة سعد", amount: 83500, time: "2023-12-25T14:15:00" }
-            ],
-            stats: {
-                bidsCount: 24,
-                biddersCount: 15,
-                viewsCount: 1245
-            }
-        };
+   
+  // بيانات المزاد
+  const auctionData = {};
+    auctionData.id = <%- auction.auction_id %>;
+    auctionData.title = "<%= auction.title %>";
+    auctionData.description = "<%= auction.description %>";
+    auctionData.currentPrice = <%- auction.current_price %>;
+    auctionData.startPrice = <%- auction.start_price %>;
+    auctionData.endTime = "<%= auction.end_time %>";
+    auctionData.status = "<%= auction.status %>";
+    auctionData.minBidIncrement = 500;
+    auctionData.images = [
+        <% if (auction.AuctionImages && auction.AuctionImages.length > 0) { %>
+            <% auction.AuctionImages.forEach((image, index) => { %>
+                "<%= image.image_url %>"<%= index < auction.AuctionImages.length - 1 ? ',' : '' %>
+            <% }); %>
+        <% } %>
+    ];
+
+    // معلومات المستخدم - الإصدار المصحح
+    const userData = {};
+    userData.isLoggedIn = <%= user ? true : false %>;
+    userData.userId = <%= user ? user.id : null %>;
+    userData.userName = "<%= user ? user.full_name : '' %>";
+
+  console.log(auctionData);
+  console.log(userData);
+
 
         // Socket.io
         let socket;
@@ -329,6 +392,11 @@
                 
                 // الانضمام إلى غرفة المزاد
                 socket.emit('joinAuction', auctionData.id);
+                
+                // الانضمام إلى غرفة المستخدم إذا كان مسجل الدخول
+                if (userData.isLoggedIn) {
+                    socket.emit('joinUserRoom', userData.userId);
+                }
             });
 
             socket.on('disconnect', () => {
@@ -339,12 +407,20 @@
 
             socket.on('newBid', (data) => {
                 console.log('🆕 New bid received:', data);
-                handleNewBid(data);
+                if (data.auction_id === auctionData.id) {
+                    handleNewBid(data);
+                }
             });
 
             socket.on('notification', (notification) => {
                 console.log('📩 Notification received:', notification);
                 showNotification(notification.message);
+            });
+
+            socket.on('auctionEnded', (data) => {
+                if (data.auction_id === auctionData.id) {
+                    handleAuctionEnded(data);
+                }
             });
         }
 
@@ -363,6 +439,7 @@
         // معالجة مزايدة جديدة
         function handleNewBid(data) {
             // تحديث السعر الحالي
+            auctionData.currentPrice = data.current_price;
             document.getElementById('currentPrice').textContent = formatCurrency(data.current_price);
             
             // تحديث عدد المزايدات
@@ -377,6 +454,26 @@
             
             // إظهار مؤشر المزايدة الجديدة
             highlightNewBid(data.bid.bid_id);
+        }
+
+        // معالجة انتهاء المزاد
+        function handleAuctionEnded(data) {
+            auctionData.status = 'ended';
+            document.getElementById('countdown').textContent = 'انتهى المزاد';
+            document.querySelector('.countdown-timer').style.background = 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)';
+            
+            // تعطيل نموذج المزايدة
+            const bidForm = document.getElementById('bidForm');
+            if (bidForm) {
+                bidForm.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="fas fa-ban text-2xl text-gray-400 mb-2"></i>
+                        <p class="text-gray-600">انتهى المزاد</p>
+                    </div>
+                `;
+            }
+            
+            showNotification('انتهى المزاد!');
         }
 
         // إضافة مزايدة إلى التاريخ
@@ -398,7 +495,12 @@
                 </div>
             `;
             
-            bidHistory.insertBefore(bidElement, bidHistory.firstChild);
+            // إضافة في الأعلى
+            if (bidHistory.firstChild) {
+                bidHistory.insertBefore(bidElement, bidHistory.firstChild);
+            } else {
+                bidHistory.appendChild(bidElement);
+            }
             
             // إزالة المؤثر بعد 3 ثواني
             setTimeout(() => {
@@ -464,15 +566,26 @@
                     document.getElementById('countdown').textContent = 'انتهى المزاد';
                     document.getElementById('submitBid').disabled = true;
                     document.getElementById('submitBid').textContent = 'انتهى المزاد';
+                    
+                    // إشعار السيرفر بانتهاء المزاد
+                    if (isConnected) {
+                        socket.emit('auctionEnded', { auction_id: auctionData.id });
+                    }
                     return;
                 }
                 
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
                 const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                 const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
                 const seconds = Math.floor((distance % (1000 * 60)) / 1000);
                 
-                document.getElementById('countdown').textContent = 
-                    `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                if (days > 0) {
+                    document.getElementById('countdown').textContent = 
+                        `${days} يوم ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                } else {
+                    document.getElementById('countdown').textContent = 
+                        `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                }
             }
             
             updateCountdown();
@@ -484,51 +597,27 @@
             const gallery = document.getElementById('imageGallery');
             const mainImage = document.getElementById('mainImage');
             
-            auctionData.images.forEach((image, index) => {
-                const thumb = document.createElement('div');
-                thumb.className = `gallery-thumb ${index === 0 ? 'active' : ''}`;
-                thumb.innerHTML = `<img src="${image}" alt="صورة ${index + 1}">`;
-                
+            if (!gallery) return;
+            
+            const thumbs = gallery.querySelectorAll('.gallery-thumb');
+            
+            thumbs.forEach((thumb, index) => {
                 thumb.addEventListener('click', () => {
                     // تحديث الصورة الرئيسية
-                    mainImage.src = image;
+                    const img = thumb.querySelector('img');
+                    mainImage.src = img.src;
                     
                     // تحديث الصورة النشطة
-                    document.querySelectorAll('.gallery-thumb').forEach(t => t.classList.remove('active'));
+                    thumbs.forEach(t => t.classList.remove('active'));
                     thumb.classList.add('active');
                 });
-                
-                gallery.appendChild(thumb);
-            });
-        }
-
-        // تهيئة تاريخ المزايدات
-        function initBidHistory() {
-            const bidHistory = document.getElementById('bidHistory');
-            
-            auctionData.bids.forEach(bid => {
-                const bidElement = document.createElement('div');
-                bidElement.className = 'bid-item';
-                
-                const bidTime = new Date(bid.time).toLocaleTimeString('ar-SA');
-                
-                bidElement.innerHTML = `
-                    <div>
-                        <p class="font-medium">${bid.user}</p>
-                        <p class="text-gray-500 text-sm">${bidTime}</p>
-                    </div>
-                    <div class="text-left">
-                        <p class="font-bold text-blue-600">${formatCurrency(bid.amount)}</p>
-                    </div>
-                `;
-                
-                bidHistory.appendChild(bidElement);
             });
         }
 
         // إرسال المزايدة
-        function submitBid() {
+        async function submitBid() {
             const bidAmount = parseFloat(document.getElementById('bidAmount').value);
+            const auctionId = document.getElementById('auctionId').value;
             const minBid = parseFloat(document.getElementById('minBid').textContent.replace(/[^\d.]/g, ''));
             
             if (!bidAmount || isNaN(bidAmount)) {
@@ -541,73 +630,89 @@
                 return;
             }
             
-            // محاكاة إرسال المزايدة إلى الخادم
-            if (isConnected) {
-                // في التطبيق الحقيقي، سيكون هذا استدعاء API
-                console.log('Submitting bid:', bidAmount);
+            const submitBtn = document.getElementById('submitBid');
+            const originalText = submitBtn.innerHTML;
+            
+            // عرض تحميل
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin ml-2"></i> جاري المزايدة...';
+            submitBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/bids', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        auction_id: parseInt(auctionId),
+                        amount: bidAmount
+                    })
+                });
                 
-                // محاكاة استجابة الخادم
-                setTimeout(() => {
-                    const mockBid = {
-                        bid_id: Date.now(),
-                        amount: bidAmount,
-                        Bidder: { full_name: 'أنت' },
-                        created_at: new Date()
-                    };
-                    
-                    handleNewBid({
-                        current_price: bidAmount,
-                        bid: mockBid
-                    });
+                const result = await response.json();
+                
+                if (result.success) {
+                    // مسح حقل الإدخال
+                    document.getElementById('bidAmount').value = '';
                     
                     // إظهار رسالة نجاح
                     showNotification('تم تقديم مزايدتك بنجاح!');
-                    
-                    // مسح حقل الإدخال
-                    document.getElementById('bidAmount').value = '';
-                }, 500);
-            } else {
-                alert('غير متصل بالخادم. يرجى المحاولة مرة أخرى.');
+                } else {
+                    alert('خطأ: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error submitting bid:', error);
+                alert('حدث خطأ أثناء تقديم المزايدة');
+            } finally {
+                // إعادة تعيين الزر
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
             }
         }
 
         // تهيئة الصفحة
         document.addEventListener('DOMContentLoaded', function() {
-            // تعبئة بيانات المزاد
-            document.getElementById('auctionTitle').textContent = auctionData.title;
-            document.getElementById('auctionId').textContent = `#${auctionData.id}`;
-            document.getElementById('auctionDescription').textContent = auctionData.description;
-            document.getElementById('currentPrice').textContent = formatCurrency(auctionData.currentPrice);
-            document.getElementById('sellerName').textContent = auctionData.seller.name;
-            document.getElementById('bidsCount').textContent = auctionData.stats.bidsCount;
-            document.getElementById('biddersCount').textContent = auctionData.stats.biddersCount;
-            document.getElementById('viewsCount').textContent = auctionData.stats.viewsCount;
-            
             // تحديث الحد الأدنى للمزايدة
             updateMinBid(auctionData.currentPrice);
             
             // تهيئة المكونات
             initImageGallery();
-            initBidHistory();
-            startCountdown();
+            
+            // بدء العد التنازلي إذا كان المزاد نشطاً
+            if (auctionData.status === 'active') {
+                startCountdown();
+            }
+            
+            // تهيئة Socket.io
             initSocket();
             
             // إعداد مستمعي الأحداث
-            document.getElementById('submitBid').addEventListener('click', submitBid);
+            const submitBidBtn = document.getElementById('submitBid');
+            if (submitBidBtn) {
+                submitBidBtn.addEventListener('click', submitBid);
+            }
             
-            document.getElementById('bidAmount').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    submitBid();
-                }
-            });
-            
-            // التحقق من تسجيل الدخول (محاكاة)
-            const isLoggedIn = false; // يمكن تغييرها إلى true للتجربة
-            if (!isLoggedIn) {
-                document.getElementById('bidForm').classList.add('hidden');
-                document.getElementById('loginRequired').classList.remove('hidden');
+            const bidAmountInput = document.getElementById('bidAmount');
+            if (bidAmountInput) {
+                bidAmountInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        submitBid();
+                    }
+                });
+                
+                // تحديث القيمة الدنيا عند الكتابة
+                bidAmountInput.addEventListener('input', function() {
+                    const minBid = parseFloat(this.min);
+                    const currentValue = parseFloat(this.value);
+                    
+                    if (currentValue < minBid) {
+                        this.setCustomValidity(`المبلغ يجب أن يكون ${formatCurrency(minBid)} أو أكثر`);
+                    } else {
+                        this.setCustomValidity('');
+                    }
+                });
             }
         });
     </script>
 </body>
-</html>
+</html> 

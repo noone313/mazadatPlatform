@@ -11,34 +11,32 @@ if (!fs.existsSync(uploadDir)) {
   console.log(`✅ تم إنشاء مجلد: ${uploadDir}`);
 }
 
-// إعداد التخزين
+// إعداد multer بسيط ومباشر
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
+  destination: function (req, file, cb) {
     cb(null, uploadDir);
   },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    const name = path.basename(file.originalname, ext).replace(/\s+/g, "_");
-    cb(null, `${Date.now()}-${name}${ext}`);
-  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
 });
 
-// فلتر الملفات المسموح بها (صور فقط)
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = /jpeg|jpg|png|gif/;
-  const ext = path.extname(file.originalname).toLowerCase();
-  const mime = file.mimetype;
-
-  if (allowedTypes.test(ext) && allowedTypes.test(mime)) {
+  if (file.mimetype.startsWith('image/')) {
     cb(null, true);
   } else {
-    cb(new Error("❌ الملف غير مسموح به. يسمح فقط بصور JPEG, PNG, GIF."));
+    cb(new Error('فقط ملفات الصور مسموح بها!'), false);
   }
 };
 
-// إعداد multer
-export const uploadAuctionImage = multer({
-  storage,
-  limits: { fileSize: 2 * 1024 * 1024 }, // الحد الأقصى 2MB
-  fileFilter
-}).single("image"); // رفع صورة واحدة فقط
+// تصدير multer middleware مباشرة
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 2 * 1024 * 1024 // 2MB
+  },
+  fileFilter: fileFilter
+});
+
+export default upload;
