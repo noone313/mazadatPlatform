@@ -13,6 +13,7 @@ import { homeRouter } from './routes/home.route.js';
 import path from "path";
 import { fileURLToPath } from "url";
 import  profileRouter  from './routes/profile.route.js';
+import { bidRouter } from './routes/bid.route.js';
 
 
 const app = express();
@@ -55,6 +56,7 @@ app.use('/',categoryRouter);
 app.use('/',auctionRouter);
 app.use('/', homeRouter);
 app.use('/api/profile', profileRouter);
+app.use('/',bidRouter);
 
 
 io.on("connection", (socket) => {

@@ -4,7 +4,7 @@ import { authenticateToken } from "../middlewares/auth.js";
 const homeRouter = Router();
 
 // Route to render the home page
-homeRouter.get("/",authenticateToken,renderHomePage);
+homeRouter.get("/",renderHomePage);
 homeRouter.get("/register", renderRegisterPage);
 homeRouter.get("/login", renderLoginPage);
 homeRouter.get("/contactus",authenticateToken, renderContactUsPage);

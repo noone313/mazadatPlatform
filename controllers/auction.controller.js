@@ -99,7 +99,6 @@ export async function getAuction(req, res) {
     const user = req.user || null;
     const { id } = req.params;
 
-    // البحث عن المزاد مع الصور والمزايدات والفئة والبائع
     const auction = await Auction.findByPk(id, {
       include: [
         {
@@ -138,9 +137,20 @@ export async function getAuction(req, res) {
       });
     }
 
+    const auctionData = auction.toJSON();
+    
+    // ✅ إصلاح مسارات الصور
+    if (auctionData.AuctionImages && auctionData.AuctionImages.length > 0) {
+      auctionData.AuctionImages = auctionData.AuctionImages.map(img => ({
+        ...img,
+        image_url: '/' + img.image_url.replace(/\\/g, '/')
+      }));
+    }
+    
+
     return res.status(200).render("auctiondetails", {
       success: true,
-      auction,
+      auction: auctionData,
       user
     });
 
@@ -153,7 +163,7 @@ export async function getAuction(req, res) {
       error: error.message
     });
   }
-};
+}
 
 
 export async function deleteAuction(req, res) {

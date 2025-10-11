@@ -119,6 +119,29 @@
         .auction-active {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
         }
+        .notification {
+            position: fixed;
+            top: 80px;
+            left: 20px;
+            background: #3b82f6;
+            color: white;
+            padding: 16px 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+            max-width: 350px;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -126,7 +149,24 @@
     <%- include('partials/navbar') %>
 
     <!-- محتوى صفحة المزاد -->
-    <main class="max-w-7xl mx-auto px-4 py-8">
+    <main class="max-w-7xl mx-auto px-4 py-8" 
+          id="auctionPage"
+          data-auction='<%- JSON.stringify({
+              id: auction.auction_id,
+              title: auction.title,
+              description: auction.description,
+              currentPrice: auction.current_price,
+              startPrice: auction.start_price,
+              endTime: auction.end_time,
+              status: auction.status,
+              minBidIncrement: 500,
+              images: auction.AuctionImages ? auction.AuctionImages.map(img => img.image_url) : []
+          }) %>'
+          data-user='<%- JSON.stringify({
+              isLoggedIn: user ? true : false,
+              userId: user ? user.id : null,
+              userName: user ? user.full_name : ''
+          }) %>'>
         <div class="auction-container overflow-hidden">
             <!-- رأس المزاد -->
             <div class="<%= auction.status === 'active' ? 'auction-active' : 'auction-ended' %> text-white p-6">
@@ -135,8 +175,8 @@
                         <h1 class="text-2xl font-bold mb-2" id="auctionTitle"><%= auction.title %></h1>
                         <p class="text-blue-100">رقم المزاد: <span id="auctionId">#<%= auction.auction_id %></span></p>
                         <div class="mt-2">
-                            <span class="socket-status connected" id="socketStatus">
-                                <i class="fas fa-circle mr-1" style="font-size: 8px;"></i> متصل
+                            <span class="socket-status disconnected" id="socketStatus">
+                                <i class="fas fa-circle mr-1" style="font-size: 8px;"></i> جاري الاتصال...
                             </span>
                         </div>
                     </div>
@@ -149,7 +189,7 @@
                 </div>
             </div>
 
-            <div class="p-6">
+              <div class="p-6">
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <!-- العمود الأيسر: صور المنتج ومعلوماته -->
                     <div class="lg:col-span-2">
@@ -161,17 +201,16 @@
                                  class="w-full h-80 object-cover">
                         </div>
 
-                        <!-- معرض الصور -->
+                        <!-- معرض الصور - يظهر فقط إذا كان هناك أكثر من صورة واحدة -->
                         <% if (auction.AuctionImages && auction.AuctionImages.length > 1) { %>
                         <div class="image-gallery" id="imageGallery">
                             <% auction.AuctionImages.forEach((image, index) => { %>
-                                <div class="gallery-thumb <%= index === 0 ? 'active' : '' %>">
+                                <div class="gallery-thumb <%= index === 0 ? 'active' : '' %>" data-index="<%= index %>">
                                     <img src="<%= image.image_url %>" alt="صورة <%= index + 1 %>">
                                 </div>
                             <% }); %>
                         </div>
                         <% } %>
-
                         <!-- وصف المزاد -->
                         <div class="mt-8">
                             <h2 class="text-xl font-bold text-gray-800 mb-4">وصف المزاد</h2>
@@ -238,7 +277,7 @@
                                 
                                 <% if (user) { %>
                                     <div id="bidForm" class="space-y-4">
-                                        <input type="hidden" id="auctionId" value="<%= auction.auction_id %>">
+                                        <input type="hidden" id="auctionIdInput" value="<%= auction.auction_id %>">
                                         <div>
                                             <label class="block text-sm font-medium text-gray-700 mb-2">مبلغ المزايدة</label>
                                             <div class="relative">
@@ -266,7 +305,7 @@
                                 <% } else { %>
                                     <div id="loginRequired" class="text-center py-4">
                                         <p class="text-gray-600 mb-3">يجب تسجيل الدخول للمشاركة في المزايدة</p>
-                                        <a href="/login" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition duration-300">
+                                        <a href="/login" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition duration-300">
                                             تسجيل الدخول
                                         </a>
                                     </div>
@@ -313,13 +352,13 @@
                             </div>
                         </div>
 
-                        <!-- المزايدات الفائزة سابقاً -->
+                        <!-- سجل المزايدات -->
                         <div class="bid-card p-4">
                             <h3 class="font-bold text-gray-800 mb-3">آخر المزايدات</h3>
                             <div class="bid-history" id="bidHistory">
                                 <% if (auction.Bids && auction.Bids.length > 0) { %>
                                     <% auction.Bids.forEach((bid, index) => { %>
-                                        <div class="bid-item <%= index === 0 ? 'new-bid-indicator' : '' %>" id="bid-<%= bid.bid_id %>">
+                                        <div class="bid-item <%= index === 0 ? 'new-bid-indicator' : '' %>" data-bid-id="<%= bid.bid_id %>">
                                             <div>
                                                 <p class="font-medium"><%= bid.Bidder.full_name %></p>
                                                 <p class="text-gray-500 text-sm">
@@ -334,7 +373,7 @@
                                         </div>
                                     <% }); %>
                                 <% } else { %>
-                                    <p class="text-gray-500 text-center py-4">لا توجد مزايدات حتى الآن</p>
+                                    <p class="text-gray-500 text-center py-4" id="noBidsMessage">لا توجد مزايدات حتى الآن</p>
                                 <% } %>
                             </div>
                         </div>
@@ -348,45 +387,25 @@
     <%- include('partials/footer') %>
 
     <script>
-   
-  // بيانات المزاد
-  const auctionData = {};
-    auctionData.id = <%- auction.auction_id %>;
-    auctionData.title = "<%= auction.title %>";
-    auctionData.description = "<%= auction.description %>";
-    auctionData.currentPrice = <%- auction.current_price %>;
-    auctionData.startPrice = <%- auction.start_price %>;
-    auctionData.endTime = "<%= auction.end_time %>";
-    auctionData.status = "<%= auction.status %>";
-    auctionData.minBidIncrement = 500;
-    auctionData.images = [
-        <% if (auction.AuctionImages && auction.AuctionImages.length > 0) { %>
-            <% auction.AuctionImages.forEach((image, index) => { %>
-                "<%= image.image_url %>"<%= index < auction.AuctionImages.length - 1 ? ',' : '' %>
-            <% }); %>
-        <% } %>
-    ];
+        // استخراج البيانات من data attributes
+        const auctionPage = document.getElementById('auctionPage');
+        const auctionData = JSON.parse(auctionPage.dataset.auction);
+        const userData = JSON.parse(auctionPage.dataset.user);
 
-    // معلومات المستخدم - الإصدار المصحح
-    const userData = {};
-    userData.isLoggedIn = <%= user ? true : false %>;
-    userData.userId = <%= user ? user.id : null %>;
-    userData.userName = "<%= user ? user.full_name : '' %>";
-
-  console.log(auctionData);
-  console.log(userData);
-
+        console.log('بيانات المزاد:', auctionData);
+        console.log('بيانات المستخدم:', userData);
 
         // Socket.io
         let socket;
         let isConnected = false;
+        let countdownInterval;
 
         // تهيئة Socket.io
         function initSocket() {
             socket = io();
 
             socket.on('connect', () => {
-                console.log('✅ Connected to server');
+                console.log('✅ تم الاتصال بالسيرفر');
                 isConnected = true;
                 updateSocketStatus(true);
                 
@@ -400,24 +419,25 @@
             });
 
             socket.on('disconnect', () => {
-                console.log('❌ Disconnected from server');
+                console.log('❌ انقطع الاتصال بالسيرفر');
                 isConnected = false;
                 updateSocketStatus(false);
             });
 
             socket.on('newBid', (data) => {
-                console.log('🆕 New bid received:', data);
+                console.log('🆕 مزايدة جديدة:', data);
                 if (data.auction_id === auctionData.id) {
                     handleNewBid(data);
                 }
             });
 
             socket.on('notification', (notification) => {
-                console.log('📩 Notification received:', notification);
+                console.log('📩 إشعار جديد:', notification);
                 showNotification(notification.message);
             });
 
             socket.on('auctionEnded', (data) => {
+                console.log('🏁 انتهى المزاد:', data);
                 if (data.auction_id === auctionData.id) {
                     handleAuctionEnded(data);
                 }
@@ -439,28 +459,35 @@
         // معالجة مزايدة جديدة
         function handleNewBid(data) {
             // تحديث السعر الحالي
-            auctionData.currentPrice = data.current_price;
-            document.getElementById('currentPrice').textContent = formatCurrency(data.current_price);
+            auctionData.currentPrice = data.current_price || data.amount;
+            document.getElementById('currentPrice').textContent = formatCurrency(auctionData.currentPrice);
             
             // تحديث عدد المزايدات
-            const bidsCount = parseInt(document.getElementById('bidsCount').textContent) + 1;
-            document.getElementById('bidsCount').textContent = bidsCount;
+            const bidsCountEl = document.getElementById('bidsCount');
+            const currentCount = parseInt(bidsCountEl.textContent) || 0;
+            bidsCountEl.textContent = currentCount + 1;
             
-            // إضافة المزايدة الجديدة إلى التاريخ
-            addBidToHistory(data.bid);
+            // إضافة المزايدة الجديدة إلى السجل
+            addBidToHistory(data.bid || data);
             
             // تحديث الحد الأدنى للمزايدة
-            updateMinBid(data.current_price);
+            updateMinBid(auctionData.currentPrice);
             
-            // إظهار مؤشر المزايدة الجديدة
-            highlightNewBid(data.bid.bid_id);
+            // إظهار إشعار
+            if (data.bidder_name && data.bidder_name !== userData.userName) {
+                showNotification(`مزايدة جديدة من ${data.bidder_name}: ${formatCurrency(data.amount)}`);
+            }
         }
 
         // معالجة انتهاء المزاد
         function handleAuctionEnded(data) {
             auctionData.status = 'ended';
             document.getElementById('countdown').textContent = 'انتهى المزاد';
-            document.querySelector('.countdown-timer').style.background = 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)';
+            
+            const timerEl = document.querySelector('.countdown-timer');
+            if (timerEl) {
+                timerEl.style.background = 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)';
+            }
             
             // تعطيل نموذج المزايدة
             const bidForm = document.getElementById('bidForm');
@@ -468,39 +495,50 @@
                 bidForm.innerHTML = `
                     <div class="text-center py-4">
                         <i class="fas fa-ban text-2xl text-gray-400 mb-2"></i>
-                        <p class="text-gray-600">انتهى المزاد</p>
+                        <p class="text-gray-600 font-medium">انتهى المزاد</p>
+                        ${data.winner_name ? `<p class="text-green-600 mt-2">الفائز: ${data.winner_name}</p>` : ''}
                     </div>
                 `;
             }
             
-            showNotification('انتهى المزاد!');
+            // إيقاف العد التنازلي
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+            
+            showNotification('انتهى المزاد! شكراً لمشاركتكم');
         }
 
-        // إضافة مزايدة إلى التاريخ
+        // إضافة مزايدة إلى السجل
         function addBidToHistory(bid) {
             const bidHistory = document.getElementById('bidHistory');
+            
+            // إزالة رسالة "لا توجد مزايدات"
+            const noBidsMsg = document.getElementById('noBidsMessage');
+            if (noBidsMsg) {
+                noBidsMsg.remove();
+            }
+            
             const bidElement = document.createElement('div');
             bidElement.className = 'bid-item new-bid-indicator';
-            bidElement.id = `bid-${bid.bid_id}`;
+            bidElement.setAttribute('data-bid-id', bid.bid_id || Date.now());
             
-            const bidTime = new Date(bid.created_at || new Date()).toLocaleTimeString('ar-SA');
+            const bidTime = new Date(bid.created_at || bid.bid_time || new Date()).toLocaleTimeString('ar-SA');
+            const bidderName = bid.bidder_name || bid.Bidder?.full_name || 'مستخدم';
+            const bidAmount = bid.amount;
             
             bidElement.innerHTML = `
                 <div>
-                    <p class="font-medium">${bid.Bidder?.full_name || 'مستخدم'}</p>
+                    <p class="font-medium">${bidderName}</p>
                     <p class="text-gray-500 text-sm">${bidTime}</p>
                 </div>
                 <div class="text-left">
-                    <p class="font-bold text-blue-600">${formatCurrency(bid.amount)}</p>
+                    <p class="font-bold text-blue-600">${formatCurrency(bidAmount)}</p>
                 </div>
             `;
             
             // إضافة في الأعلى
-            if (bidHistory.firstChild) {
-                bidHistory.insertBefore(bidElement, bidHistory.firstChild);
-            } else {
-                bidHistory.appendChild(bidElement);
-            }
+            bidHistory.insertBefore(bidElement, bidHistory.firstChild);
             
             // إزالة المؤثر بعد 3 ثواني
             setTimeout(() => {
@@ -508,23 +546,20 @@
             }, 3000);
         }
 
-        // تمييز المزايدة الجديدة
-        function highlightNewBid(bidId) {
-            const bidElement = document.getElementById(`bid-${bidId}`);
-            if (bidElement) {
-                bidElement.classList.add('new-bid-indicator');
-                setTimeout(() => {
-                    bidElement.classList.remove('new-bid-indicator');
-                }, 3000);
-            }
-        }
-
         // تحديث الحد الأدنى للمزايدة
         function updateMinBid(currentPrice) {
             const minBid = currentPrice + auctionData.minBidIncrement;
-            document.getElementById('minBid').textContent = formatCurrency(minBid);
-            document.getElementById('bidAmount').min = minBid;
-            document.getElementById('bidAmount').placeholder = `الحد الأدنى: ${formatCurrency(minBid)}`;
+            const minBidEl = document.getElementById('minBid');
+            const bidAmountInput = document.getElementById('bidAmount');
+            
+            if (minBidEl) {
+                minBidEl.textContent = formatCurrency(minBid);
+            }
+            
+            if (bidAmountInput) {
+                bidAmountInput.min = minBid;
+                bidAmountInput.placeholder = `الحد الأدنى: ${formatCurrency(minBid)}`;
+            }
         }
 
         // تنسيق العملة
@@ -536,9 +571,8 @@
 
         // عرض الإشعارات
         function showNotification(message) {
-            // إنشاء عنصر الإشعار
             const notification = document.createElement('div');
-            notification.className = 'fixed top-20 left-4 bg-blue-600 text-white p-4 rounded-lg shadow-lg z-50 max-w-sm';
+            notification.className = 'notification';
             notification.innerHTML = `
                 <div class="flex items-center">
                     <i class="fas fa-bell mr-2"></i>
@@ -548,9 +582,9 @@
             
             document.body.appendChild(notification);
             
-            // إزالة الإشعار بعد 5 ثواني
             setTimeout(() => {
-                notification.remove();
+                notification.style.animation = 'slideIn 0.3s ease reverse';
+                setTimeout(() => notification.remove(), 300);
             }, 5000);
         }
 
@@ -564,10 +598,18 @@
                 
                 if (distance < 0) {
                     document.getElementById('countdown').textContent = 'انتهى المزاد';
-                    document.getElementById('submitBid').disabled = true;
-                    document.getElementById('submitBid').textContent = 'انتهى المزاد';
                     
-                    // إشعار السيرفر بانتهاء المزاد
+                    const submitBtn = document.getElementById('submitBid');
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.textContent = 'انتهى المزاد';
+                    }
+                    
+                    if (countdownInterval) {
+                        clearInterval(countdownInterval);
+                    }
+                    
+                    // إشعار السيرفر
                     if (isConnected) {
                         socket.emit('auctionEnded', { auction_id: auctionData.id });
                     }
@@ -579,17 +621,18 @@
                 const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
                 const seconds = Math.floor((distance % (1000 * 60)) / 1000);
                 
+                let countdownText;
                 if (days > 0) {
-                    document.getElementById('countdown').textContent = 
-                        `${days} يوم ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                    countdownText = `${days} يوم ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
                 } else {
-                    document.getElementById('countdown').textContent = 
-                        `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                    countdownText = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
                 }
+                
+                document.getElementById('countdown').textContent = countdownText;
             }
             
             updateCountdown();
-            setInterval(updateCountdown, 1000);
+            countdownInterval = setInterval(updateCountdown, 1000);
         }
 
         // تهيئة معرض الصور
@@ -597,29 +640,33 @@
             const gallery = document.getElementById('imageGallery');
             const mainImage = document.getElementById('mainImage');
             
-            if (!gallery) return;
+            if (!gallery || !mainImage) return;
             
             const thumbs = gallery.querySelectorAll('.gallery-thumb');
             
-            thumbs.forEach((thumb, index) => {
-                thumb.addEventListener('click', () => {
-                    // تحديث الصورة الرئيسية
-                    const img = thumb.querySelector('img');
-                    mainImage.src = img.src;
-                    
-                    // تحديث الصورة النشطة
-                    thumbs.forEach(t => t.classList.remove('active'));
-                    thumb.classList.add('active');
+            thumbs.forEach((thumb) => {
+                thumb.addEventListener('click', function() {
+                    const img = this.querySelector('img');
+                    if (img) {
+                        mainImage.src = img.src;
+                        
+                        // تحديث الصورة النشطة
+                        thumbs.forEach(t => t.classList.remove('active'));
+                        this.classList.add('active');
+                    }
                 });
             });
         }
 
         // إرسال المزايدة
         async function submitBid() {
-            const bidAmount = parseFloat(document.getElementById('bidAmount').value);
-            const auctionId = document.getElementById('auctionId').value;
-            const minBid = parseFloat(document.getElementById('minBid').textContent.replace(/[^\d.]/g, ''));
+            const bidAmountInput = document.getElementById('bidAmount');
+            const bidAmount = parseFloat(bidAmountInput.value);
+            const auctionId = document.getElementById('auctionIdInput').value;
+            const minBidText = document.getElementById('minBid').textContent;
+            const minBid = parseFloat(minBidText.replace(/[^\d.]/g, ''));
             
+            // التحقق من صحة المدخلات
             if (!bidAmount || isNaN(bidAmount)) {
                 alert('يرجى إدخال مبلغ صحيح');
                 return;
@@ -633,7 +680,7 @@
             const submitBtn = document.getElementById('submitBid');
             const originalText = submitBtn.innerHTML;
             
-            // عرض تحميل
+            // عرض حالة التحميل
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin ml-2"></i> جاري المزايدة...';
             submitBtn.disabled = true;
             
@@ -649,20 +696,61 @@
                     })
                 });
                 
-                const result = await response.json();
+                console.log('Response Status:', response.status);
+                console.log('Response OK:', response.ok);
+                console.log('Content-Type:', response.headers.get('content-type'));
                 
-                if (result.success) {
+                // قراءة النص أولاً
+                const responseText = await response.text();
+                console.log('Response Text:', responseText);
+                
+                let result;
+                try {
+                    result = JSON.parse(responseText);
+                    console.log('Response Data:', result);
+                } catch (parseError) {
+                    console.error('❌ خطأ في تحليل JSON:', parseError);
+                    console.error('📄 الاستجابة ليست JSON، ربما HTML أو صفحة خطأ');
+                    
+                    // فحص إذا كانت صفحة تسجيل دخول
+                    if (responseText.includes('<!DOCTYPE') || responseText.includes('<html')) {
+                        alert('⚠️ يبدو أنك بحاجة لتسجيل الدخول مرة أخرى.\nسيتم توجيهك لصفحة تسجيل الدخول.');
+                        window.location.href = '/login';
+                        return;
+                    }
+                    
+                    alert('خطأ في الاستجابة من السيرفر.\nالسيرفر أرجع HTML بدلاً من JSON.\n\nالرجاء التحقق من:\n1. أنك مسجل دخول\n2. الصلاحيات صحيحة\n3. المسار /bids يعمل بشكل صحيح');
+                    return;
+                }
+                
+                if (response.ok && result.success) {
                     // مسح حقل الإدخال
-                    document.getElementById('bidAmount').value = '';
+                    bidAmountInput.value = '';
                     
                     // إظهار رسالة نجاح
-                    showNotification('تم تقديم مزايدتك بنجاح!');
+                    showNotification('✅ تم تقديم مزايدتك بنجاح!');
                 } else {
-                    alert('خطأ: ' + result.message);
+                    const errorMessage = result.message || result.error || 'حدث خطأ أثناء تقديم المزايدة';
+                    console.error('❌ خطأ من السيرفر:', errorMessage);
+                    console.error('📦 كامل البيانات:', result);
+                    alert('خطأ: ' + errorMessage);
                 }
             } catch (error) {
-                console.error('Error submitting bid:', error);
-                alert('حدث خطأ أثناء تقديم المزايدة');
+                console.error('❌ خطأ في تقديم المزايدة:', error);
+                console.error('🔍 نوع الخطأ:', error.name);
+                console.error('💬 رسالة الخطأ:', error.message);
+                console.error('📚 Stack trace:', error.stack);
+                
+                // رسائل خطأ مفصلة
+                let userMessage = 'حدث خطأ: ' + error.message;
+                
+                if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                    userMessage = '❌ فشل الاتصال بالسيرفر.\nالرجاء التحقق من:\n1. اتصال الإنترنت\n2. السيرفر يعمل بشكل صحيح';
+                } else if (error.name === 'SyntaxError') {
+                    userMessage = '❌ خطأ في البيانات المرسلة.\nالرجاء المحاولة مرة أخرى.';
+                }
+                
+                alert(userMessage + '\n\nللمزيد من التفاصيل افتح Console (F12)');
             } finally {
                 // إعادة تعيين الزر
                 submitBtn.innerHTML = originalText;
@@ -672,10 +760,12 @@
 
         // تهيئة الصفحة
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('📄 تم تحميل الصفحة');
+            
             // تحديث الحد الأدنى للمزايدة
             updateMinBid(auctionData.currentPrice);
             
-            // تهيئة المكونات
+            // تهيئة معرض الصور
             initImageGallery();
             
             // بدء العد التنازلي إذا كان المزاد نشطاً
@@ -686,33 +776,48 @@
             // تهيئة Socket.io
             initSocket();
             
-            // إعداد مستمعي الأحداث
+            // إعداد زر تقديم المزايدة
             const submitBidBtn = document.getElementById('submitBid');
             if (submitBidBtn) {
                 submitBidBtn.addEventListener('click', submitBid);
             }
             
+            // إعداد حقل إدخال المبلغ
             const bidAmountInput = document.getElementById('bidAmount');
             if (bidAmountInput) {
+                // إرسال عند الضغط على Enter
                 bidAmountInput.addEventListener('keypress', function(e) {
                     if (e.key === 'Enter') {
+                        e.preventDefault();
                         submitBid();
                     }
                 });
                 
-                // تحديث القيمة الدنيا عند الكتابة
+                // التحقق من القيمة أثناء الكتابة
                 bidAmountInput.addEventListener('input', function() {
                     const minBid = parseFloat(this.min);
                     const currentValue = parseFloat(this.value);
                     
-                    if (currentValue < minBid) {
+                    if (currentValue && currentValue < minBid) {
                         this.setCustomValidity(`المبلغ يجب أن يكون ${formatCurrency(minBid)} أو أكثر`);
                     } else {
                         this.setCustomValidity('');
                     }
                 });
             }
+            
+            console.log('✅ تم تهيئة جميع المكونات');
+        });
+
+        // تنظيف عند مغادرة الصفحة
+        window.addEventListener('beforeunload', function() {
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+            if (socket && isConnected) {
+                socket.disconnect();
+            }
         });
     </script>
 </body>
-</html> 
+</html>

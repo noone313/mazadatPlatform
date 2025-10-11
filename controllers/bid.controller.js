@@ -1,6 +1,4 @@
-import { Bid } from "../models/bid.model.js";
-import { Auction } from "../models/auction.model.js";
-import { Notification } from "../models/notification.model.js";
+import { Auction, Bid, Notification } from "../models/models.js";
 import { User, sequelize } from "../models/models.js";
 
 export const createBid = async (req, res) => {
